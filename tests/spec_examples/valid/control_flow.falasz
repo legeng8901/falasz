@@ -1,0 +1,23 @@
+LET i = 0
+WHILE TRUE
+    i = i + 1
+    IF i % 2 == 0
+        CONTINUE
+    ELSE IF i > 7
+        BREAK
+    END
+    SAY i
+END
+FOR c IN "ab"
+    SAY c
+END
+LET m = {"x": 1, "y": 2}
+FOR k IN m
+    SAY k + "=" + STR(m[k])
+END
+LET xs = [1, 2]
+FOR x IN xs
+    xs[0] = 99
+    SAY x
+END
+SAY xs

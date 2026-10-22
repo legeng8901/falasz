@@ -1,0 +1,3 @@
+LET i = 0
+FOR i IN RANGE(0, 2)
+END

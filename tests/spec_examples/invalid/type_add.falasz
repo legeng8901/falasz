@@ -1,0 +1,2 @@
+LET age = 20
+SAY "Age: " + age

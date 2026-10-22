@@ -1,0 +1,61 @@
+LET x = 1
+IF TRUE
+    LET y = 2
+    x = 3
+END
+SAY x
+SAY y
+FOR i IN RANGE(0, 3)
+END
+SAY i
+FOR i IN [7]
+    LET doubled = i * 2
+END
+SAY doubled
+LET total = 0
+FOR n IN [1, 2, 3]
+    LET sq = n * n
+    total = total + sq
+END
+SAY total
+FUNC shadow()
+    LET x = "inner"
+    RETURN x
+END
+SAY shadow()
+SAY x
+FUNC make_counter()
+    LET n = 0
+    FUNC inc()
+        n = n + 1
+        RETURN n
+    END
+    RETURN inc
+END
+LET c = make_counter()
+c()
+SAY c()
+FUNC is_even(n)
+    IF n == 0
+        RETURN TRUE
+    END
+    RETURN is_odd(n - 1)
+END
+FUNC is_odd(n)
+    IF n == 0
+        RETURN FALSE
+    END
+    RETURN is_even(n - 1)
+END
+SAY is_even(10)
+FUNC fact(n)
+    IF n <= 1
+        RETURN 1
+    END
+    RETURN n * fact(n - 1)
+END
+SAY fact(20)
+FUNC nothing()
+    RETURN
+END
+SAY nothing()

@@ -1,0 +1,4 @@
+EXPORT hello
+FUNC hello()
+    RETURN "local files module"
+END

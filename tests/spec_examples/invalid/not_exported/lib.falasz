@@ -1,0 +1,3 @@
+EXPORT pub
+LET pub = 1
+LET secret = 2

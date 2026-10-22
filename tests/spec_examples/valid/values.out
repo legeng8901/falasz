@@ -1,0 +1,21 @@
+TRUE
+NULL
+tab:	end
+[1, "a", TRUE, NULL, 2.5, [3]]
+{"a": 1, 2: "b", TRUE: [1]}
+42!
+-11
+3
+-3
+2.0
+2.5
+6
+3
+0
+b
+TRUE
+FALSE
+TRUE
+TRUE
+TRUE
+[1, 2, 3]

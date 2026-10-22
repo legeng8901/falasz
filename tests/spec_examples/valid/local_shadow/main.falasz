@@ -1,0 +1,4 @@
+IMPORT files
+IMPORT LOCAL files AS my_files
+SAY my_files.hello()
+SAY files.read_text("data.txt")

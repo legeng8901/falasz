@@ -1,0 +1,6 @@
+LET name = INPUT("Name: ")
+SAY "Hello, " + name
+LET n = INT(INPUT())
+SAY n * 2
+SAY INPUT() == ""
+SAY INPUT()

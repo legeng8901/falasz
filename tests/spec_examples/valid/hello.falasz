@@ -1,0 +1,14 @@
+# hello.falasz (przykład ze specyfikacji)
+LET name = "Daniel"
+LET age = 20
+FUNC greet(person)
+    RETURN "Hello, " + person
+END
+IF age >= 18
+    SAY greet(name)
+ELSE
+    SAY "Access denied"
+END
+FOR number IN RANGE(1, 4)
+    SAY number
+END

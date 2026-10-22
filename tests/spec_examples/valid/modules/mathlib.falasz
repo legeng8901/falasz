@@ -1,0 +1,8 @@
+EXPORT square, PI
+LET PI = 3.14
+LET calls = 0
+FUNC square(x)
+    calls = calls + 1
+    RETURN x * x
+END
+SAY "mathlib loaded"

@@ -1,0 +1,21 @@
+SAY TRUE
+SAY NULL
+SAY "tab:\tend"
+SAY [1, "a", TRUE, NULL, 2.5, [3]]
+SAY {"a": 1, 2: "b", TRUE: [1]}
+SAY STR(42) + "!"
+SAY INT("-12") + 1
+SAY INT(3.9)
+SAY INT(-3.9)
+SAY FLOAT(2)
+SAY FLOAT("2.5")
+SAY LEN("zażółć")
+SAY LEN([1, 2, 3])
+SAY LEN({})
+SAY "abc"[1]
+SAY 1 == 1.0
+SAY 1 == "1"
+SAY [1, [2]] == [1, [2]]
+SAY "a" < "b"
+SAY NOT 1 > 2
+SAY [1] + [2, 3]

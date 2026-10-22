@@ -1,0 +1,4 @@
+FUNC f(a, b)
+    RETURN a
+END
+SAY f(1)

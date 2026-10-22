@@ -1,0 +1,5 @@
+WHILE TRUE
+    FUNC f()
+        BREAK
+    END
+END

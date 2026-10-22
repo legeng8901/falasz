@@ -1,0 +1,5 @@
+IMPORT LOCAL mathlib
+IMPORT mathlib AS m2
+SAY mathlib.square(4)
+SAY mathlib.PI
+SAY mathlib == m2
