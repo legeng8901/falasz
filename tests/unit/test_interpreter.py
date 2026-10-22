@@ -1,5 +1,6 @@
 import io
 import sys
+import time
 
 import pytest
 
@@ -368,9 +369,56 @@ def test_deeply_nested_values_hit_limit_not_python_recursion():
 def test_huge_integer_text_conversion_limit():
     digits = sys.get_int_max_str_digits()
     assert_error(f"SAY {'1' * (digits + 1)}\n", "LimitError", 1, 5, "too many digits")
-    src = "LET x = 1\nFOR i IN RANGE(0, 15000)\n x = x * 10\nEND\nSAY x\n"
-    assert_error(src, "LimitError", 5, 1, "too many digits")
     assert_error(f'SAY INT("{"1" * (digits + 1)}")\n', "LimitError", 1, 8, "too many digits")
+
+
+# ---------------------------------------------------- INTEGER size limit
+
+MAX_INT = "INT(\"" + "9" * 4300 + "\")"  # the largest INTEGER: 4300 nines
+
+
+def test_largest_integer_is_allowed_and_printable():
+    out = run(f"LET m = {MAX_INT}\nSAY m\nSAY -m\nSAY m - 1 + 1\nSAY LEN(STR(m * 1))\n")
+    lines = out.split("\n")
+    assert lines[0] == "9" * 4300 and lines[1] == "-" + "9" * 4300
+    assert lines[2] == lines[0] and lines[3] == "4300"
+
+
+@pytest.mark.parametrize("expr, col", [
+    ("m + 1", 7), ("1 + m", 7), ("-m - 1", 8), ("m - -1", 7), ("m * 10", 7), ("m * -2", 7),
+], ids=["add", "add-left", "sub-negative", "sub-minus-negative", "mul", "mul-negative"])
+def test_integer_result_above_limit_is_limit_error(expr, col):
+    assert_error(f"LET m = {MAX_INT}\nSAY {expr}\n", "LimitError", 2, col,
+                 "INTEGER result has more than 4300 digits")
+
+
+def test_integer_limit_applies_to_assignment_and_reports_operator():
+    src = "LET x = 1\nFOR i IN RANGE(0, 5000)\n    x = x * 10\nEND\n"
+    assert_error(src, "LimitError", 3, 11, "more than 4300 digits")
+
+
+def test_repeated_squaring_stops_quickly():
+    # Without the limit one step of this loop would soon take minutes.
+    start = time.monotonic()
+    assert_error("LET x = 10\nWHILE TRUE\n    x = x * x\nEND\n", "LimitError", 3, 11)
+    assert time.monotonic() - start < 5
+
+
+@pytest.mark.parametrize("src, out", [
+    # Large values below the limit behave exactly as before.
+    ("LET f = 1\nFOR i IN RANGE(2, 1001)\n    f = f * i\nEND\nSAY LEN(STR(f))\n", "2568"),  # 1000!
+    (f"SAY {MAX_INT} % 7\n", "3"),
+    (f"SAY {MAX_INT} - {MAX_INT}\n", "0"),
+    ("SAY LEN(STR(INT(1" + "0" * 308 + ".0)))\n", "309"),
+], ids=["factorial-1000", "mod", "sub-to-zero", "int-of-large-float"])
+def test_values_below_integer_limit_unchanged(src, out):
+    assert run(src) == out + "\n"
+
+
+def test_integer_limit_does_not_change_float_rules():
+    # INTEGER + FLOAT is FLOAT arithmetic: the FLOAT range error, as before.
+    assert_error(f"SAY {MAX_INT} + 0.5\n", "ArithmeticError", 1, 4313, "too large for a FLOAT")
+    assert_error(f"SAY {MAX_INT} / 3\n", "ArithmeticError", 1, 4313)
 
 
 # ----------------------------------------------------------------- builtins

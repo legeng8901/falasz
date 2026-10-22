@@ -76,7 +76,7 @@ Diagnostics, warnings and tracebacks go to stderr.
 | 1 | runtime error (the program started) |
 | 2 | command-line usage error: bad arguments, missing input file, invalid `--sensors-mock` data |
 | 3 | syntax, name, import or export error (nothing was run) |
-| 70 | internal interpreter error (a bug, please report it) |
+| 70 | internal interpreter error (a bug, please report it); in 0.1 also when the computer runs out of memory, see [limitations](docs/limitations.md) |
 | 130 | interrupted with Ctrl+C |
 
 Errors always name the file, line and column (`falasz run error_trace.falasz`, run in `examples/`):
@@ -93,7 +93,7 @@ error_trace.falasz:7:18: ZeroDivisionError: division by zero
 
 The full, normative description is in [docs/spec.md](docs/spec.md) (in Polish).
 
-* **Values:** `INTEGER` (unlimited size), `FLOAT`, `STRING`, `BOOLEAN` (`TRUE`, `FALSE`),
+* **Values:** `INTEGER` (up to 4300 digits), `FLOAT`, `STRING`, `BOOLEAN` (`TRUE`, `FALSE`),
   `NULL`, `LIST` (`[1, "a"]`), `MAP` (`{"key": 1}`), functions and modules.
 * **No implicit conversions:** `"Age: " + 20` is a `TypeError`; use
   `STR`, `INT`, `FLOAT`. Conditions must be `BOOLEAN`. `/` always gives a `FLOAT`.

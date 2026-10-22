@@ -28,6 +28,13 @@ from .errors import (
 
 MAX_VALUE_DEPTH = 500
 
+# INTEGER values have at most MAX_INT_DIGITS decimal digits: the same limit as
+# converting an INTEGER to or from text, so every INTEGER can be printed, and a
+# single arithmetic step stays cheap.
+MAX_INT_DIGITS = 4300
+_INT_BOUND = 10**MAX_INT_DIGITS
+_SAFE_BITS = (_INT_BOUND - 1).bit_length() - 1  # fewer bits: always below the bound
+
 
 class FMap:
     """Insertion-ordered map. Keys are normalized so that TRUE and 1 stay distinct."""
@@ -267,6 +274,12 @@ def _float_op(fn: Callable[[], float]) -> float:
         raise FalaszArithmeticError("number is too large for a FLOAT") from None
 
 
+def _int_result(x: int) -> int:
+    if x.bit_length() > _SAFE_BITS and not -_INT_BOUND < x < _INT_BOUND:
+        raise FalaszLimitError(f"INTEGER result has more than {MAX_INT_DIGITS} digits")
+    return x
+
+
 def _type_error(op: str, a: Any, b: Any) -> FalaszError:
     return FalaszTypeError(f"unsupported operand types for {op}: {type_name(a)} and {type_name(b)}")
 
@@ -274,7 +287,7 @@ def _type_error(op: str, a: Any, b: Any) -> FalaszError:
 def add(a: Any, b: Any) -> Any:
     ta, tb = type(a), type(b)
     if ta is int and tb is int:
-        return a + b
+        return _int_result(a + b)
     if is_number(a) and is_number(b):
         return _float_op(lambda: a + b)
     if ta is str and tb is str:
@@ -292,14 +305,14 @@ def _numeric(op: str, a: Any, b: Any) -> None:
 def sub(a: Any, b: Any) -> Any:
     _numeric("-", a, b)
     if type(a) is int and type(b) is int:
-        return a - b
+        return _int_result(a - b)
     return _float_op(lambda: a - b)
 
 
 def mul(a: Any, b: Any) -> Any:
     _numeric("*", a, b)
     if type(a) is int and type(b) is int:
-        return a * b
+        return _int_result(a * b)
     return _float_op(lambda: a * b)
 
 

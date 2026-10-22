@@ -11,8 +11,8 @@ First alpha of the language and its reference interpreter.
 ### Language
 - Specification v0.1 ([docs/spec.md](docs/spec.md)): grammar (EBNF), operator
   precedence, types, scopes, diagnostics, limits; owner decisions P1–P16,
-  N1–N8 and E1–E25 recorded in section 12.
-- Types INTEGER (arbitrary precision), FLOAT, STRING, BOOLEAN, NULL, LIST, MAP;
+  N1–N8 and E1–E28 recorded in section 12.
+- Types INTEGER (up to 4300 digits), FLOAT, STRING, BOOLEAN, NULL, LIST, MAP;
   functions and modules as values.
 - Strict typing without implicit conversions; `/` always returns FLOAT;
   conditions and `AND`/`OR`/`NOT` require BOOLEAN; short-circuit evaluation.
@@ -50,6 +50,9 @@ First alpha of the language and its reference interpreter.
 - A source file is read only up to the 1 MiB limit: `falasz check /dev/zero`
   or a huge module now gives `LimitError` (exit code 3) instead of running out
   of memory and reporting an internal error.
+- INTEGER values are limited to 4300 decimal digits (E26): a `+`, `-` or `*`
+  with a larger result is a `LimitError`. One arithmetic step can no longer
+  run for minutes (repeated squaring), and every INTEGER can be printed.
 
 ### Known limitations
 - See [docs/limitations.md](docs/limitations.md). Planned after v0.1:

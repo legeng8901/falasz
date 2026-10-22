@@ -29,7 +29,8 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 - String escapes are only `\"`, `\\`, `\n`, `\t`: a carriage return (`\r`) or
   other control character cannot be written in a literal. Text read from a file
   with Windows line endings contains `\r`; it can be filtered out only by
-  comparison (`ch < " "`), see `examples/budget/csv.falasz`.
+  comparison (`ch < " "`), see `examples/budget/csv.falasz`. A `\r` escape is
+  planned for v0.2.
 - No rounding function: a FLOAT is printed with all its digits
   (`37.77777777777778`); rounding has to be written by hand
   (`examples/temperature.falasz`).
@@ -51,7 +52,9 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
   line only inside `( )`, `[ ]` or `{ }`.
 - Very long `ELSE IF` chains (~200 branches) hit the nesting limit (N8).
 - Nested values deeper than 500 levels cannot be printed or compared (`LimitError`).
-- INTEGER <-> text conversion is limited to 4300 digits (Python's limit, `LimitError`).
+- INTEGER values have at most 4300 decimal digits: a `+`, `-` or `*` whose result
+  would be larger is a `LimitError`. It is the same limit as for converting an
+  INTEGER to or from text, so every INTEGER can be printed.
 - `files` is not a sandbox: `..` and absolute paths work with the process's
   permissions; resource limits do not replace OS-level isolation.
 - Local modules must live in the importing file's directory (no subdirectories).
@@ -65,15 +68,14 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 
 ## Resource limits that do not exist yet
 
-The limits above stop runaway programs; they do not bound memory or the work
-done by a single step. Untrusted programs need OS-level limits (memory, time).
+The limits above stop runaway programs; they do not bound memory. Untrusted
+programs need OS-level limits (memory, time).
 
 - No memory limit. A program that keeps doubling a STRING or LIST runs until
-  the operating system refuses more memory; the interpreter then stops with
-  `InternalError: MemoryError` (exit code 70), which wrongly suggests a bug.
-- INTEGER has no size limit. Repeated squaring makes numbers so large that a
-  single multiplication takes minutes; `--max-steps` counts statements, not the
-  work inside one, so it cannot stop this.
+  the operating system refuses more memory. **Current behaviour (kept in 0.1):**
+  the interpreter stops with `InternalError: MemoryError` and exit code 70, and
+  its message calls this a bug, although it is not one. Reporting it as an
+  ordinary program error is planned for v0.2.
 - `INPUT()` reads a whole line however long it is.
 - `files.read_text` on a named pipe (FIFO) waits until another process writes to
   it.

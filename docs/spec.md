@@ -161,7 +161,7 @@ Przykłady: `NOT a == b` ≡ `NOT (a == b)`; `-2 * 3` ≡ `(-2) * 3`; `1 + 2 * 3
 
 | Typ | Przykład | Zmienny? | Reprezentacja w `SAY`/`STR` |
 |---|---|---|---|
-| INTEGER | `42` | nie | `42` |
+| INTEGER | `42` (najwyżej 4300 cyfr, sekcja 10) | nie | `42` |
 | FLOAT | `3.5` | nie | najkrótsza dokładna postać dziesiętna, zawsze z kropką, bez wykładnika: `2.0`, `0.1`, `100000000000000000000.0` |
 | STRING | `"hi"` | nie | treść bez cudzysłowów: `hi` |
 | BOOLEAN | `TRUE` | nie | `TRUE` / `FALSE` |
@@ -439,6 +439,7 @@ Eksportuje: `available`, `read`. Pełny opis API i formatu danych: `docs/sensors
 | Rozmiar pliku w `files.read_text` | 16 MiB | `FileError` |
 | Głębokość zagnieżdżenia wartości przy `STR`, `SAY`, `==` | 500 | `LimitError` |
 | Liczba cyfr przy konwersji INTEGER ↔ tekst (literał, `STR`, `INT`, `SAY`) | 4300 (limit Pythona) | `LimitError` |
+| Wielkość INTEGER: wynik `+`, `-`, `*` na liczbach INTEGER (E26) | 4300 cyfr dziesiętnych, czyli \|x\| < 10^4300 | `LimitError` |
 
 Limity służą testom i niezaufanym danym; nie zastępują izolacji systemu operacyjnego.
 
@@ -604,6 +605,14 @@ dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
 | E24 | Zamknięty potok wyjścia (`falasz run p.falasz \| head`) | cicho, kod 1, bez `InternalError` |
 | E25 | Podsumowanie `check` | ostatnia linia na stderr: `N error(s) found` |
 
+### 12.8 Ustalone przy przygotowaniu wydania — 2026-10-22
+
+| # | Temat | Decyzja |
+|---|---|---|
+| E26 | Wielkość INTEGER (limit zlecony przez właściciela) | najwyżej 4300 cyfr dziesiętnych — ta sama granica co przy konwersji na tekst, więc każdą liczbę INTEGER da się wypisać. Wynik `+`, `-`, `*` na dwóch INTEGER poza zakresem → `LimitError` w miejscu operatora. Pozostała semantyka liczb bez zmian (`%` nie zwiększa wartości, `/` daje FLOAT, działania z FLOAT jak dotąd). |
+| E27 | Brak pamięci | bez zmian w v0.1: `InternalError: MemoryError`, kod 70; opisane w `docs/limitations.md`. Zmiana komunikatu i kodu wyjścia odłożona (sekcja 13). |
+| E28 | Sekwencja `\r` w tekstach | odłożona do v0.2 (sekcja 13). |
+
 ## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
 
 Zgłoszone przez właściciela do realizacji **po** ukończeniu v0.1 — nie implementować wcześniej:
@@ -614,6 +623,10 @@ Zgłoszone przez właściciela do realizacji **po** ukończeniu v0.1 — nie imp
   odrzucałby ścieżki wychodzące poza wskazany katalog. To ograniczenie dostępu dla
   wygody i ochrony przed pomyłkami, **nie** pełna piaskownica — nie zastępuje izolacji
   systemu operacyjnego (dowiązania symboliczne, uprawnienia procesu, inne kanały).
+
+Odłożone przez właściciela do v0.2:
+- sekwencja ucieczki `\r` w literałach tekstowych (E28);
+- brak pamięci zgłaszany jako błąd programu zamiast `InternalError` z kodem 70 (E27).
 
 Kandydaci (bez decyzji): funkcje tekstowe (podział, wielkość liter, wycinki),
 `TRY/CATCH`, lambdy, interpolacja tekstu, notacja wykładnicza, kompilator.

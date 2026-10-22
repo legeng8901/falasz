@@ -140,7 +140,7 @@ program has errors and did not start.
 ### Values and variables
 
 ```falasz
-LET count = 3              # INTEGER, any size
+LET count = 3              # INTEGER, up to 4300 digits
 LET price = 9.99           # FLOAT
 LET title = "Falasz"       # STRING
 LET ready = TRUE           # BOOLEAN: TRUE or FALSE

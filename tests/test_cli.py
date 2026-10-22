@@ -256,6 +256,13 @@ def test_oversized_module_is_limit_error(tmp_path):
     assert code == 3 and "lib.falasz: LimitError: source file is larger than" in err
 
 
+def test_integer_size_limit_is_runtime_limit_error(tmp_path):
+    write(tmp_path, "p.falasz", 'LET x = 10\nSAY "start"\nWHILE TRUE\n    x = x * x\nEND\n')
+    code, out, err = falasz_cmd("run", "p.falasz", cwd=tmp_path)
+    assert (code, out) == (1, b"start\n")
+    assert err == "p.falasz:4:11: LimitError: INTEGER result has more than 4300 digits\n"
+
+
 @pytest.mark.skipif(not os.path.exists("/dev/zero"), reason="needs /dev/zero")
 def test_endless_source_device_is_limit_error_not_internal_error():
     # The source is read only up to the limit, never until memory runs out.
