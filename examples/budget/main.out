@@ -1,0 +1,14 @@
+Category         Spent     Limit  Status
+food            176.85    200.00  ok
+transport        99.00    100.00  ok
+home            240.44    250.00  ok
+fun              70.90     50.00  OVER by 20.90
+books            45.00         -  no limit set
+Total spent: 632.19
+
+Skipped:
+  line 12: expected 4 fields, found 2
+  2026-10-10 Taxi: invalid amount 'abc'
+  2026-10-15 Concert: invalid amount ''
+
+Report saved to report.txt (267 characters).

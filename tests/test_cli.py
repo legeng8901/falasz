@@ -241,6 +241,28 @@ def test_non_utf8_source_is_syntax_error(tmp_path):
     assert code == 3 and err.startswith("p.falasz:1:6: SyntaxError: invalid UTF-8")
 
 
+@pytest.mark.parametrize("command", ["run", "check"])
+def test_oversized_source_is_limit_error(tmp_path, command):
+    write(tmp_path, "p.falasz", b"#" * (1024 * 1024 + 1))
+    code, _, err = falasz_cmd(command, "p.falasz", cwd=tmp_path)
+    message = "p.falasz: LimitError: source file is larger than the limit of 1048576 bytes\n"
+    assert (code, err) == (3, message + ("1 error found\n" if command == "check" else ""))
+
+
+def test_oversized_module_is_limit_error(tmp_path):
+    write(tmp_path, "lib.falasz", b"#" * (1024 * 1024 + 1))
+    write(tmp_path, "p.falasz", "IMPORT LOCAL lib\n")
+    code, _, err = falasz_cmd("check", "p.falasz", cwd=tmp_path)
+    assert code == 3 and "lib.falasz: LimitError: source file is larger than" in err
+
+
+@pytest.mark.skipif(not os.path.exists("/dev/zero"), reason="needs /dev/zero")
+def test_endless_source_device_is_limit_error_not_internal_error():
+    # The source is read only up to the limit, never until memory runs out.
+    code, _, err = falasz_cmd("check", "/dev/zero")
+    assert code == 3 and "LimitError: source file is larger than" in err
+
+
 def test_crlf_source_file_runs_identically(tmp_path):
     write(tmp_path, "p.falasz", b"LET a = 1\r\nIF a == 1\r\n    SAY \"ok\"\r\nEND\r\nSAY 1 / 0\r\n")
     code, out, err = falasz_cmd("run", "p.falasz", cwd=tmp_path)

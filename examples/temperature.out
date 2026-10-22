@@ -1,0 +1,17 @@
+ Celsius  Fahrenheit   Kelvin
+     -20        -4.0   253.15
+     -10        14.0   263.15
+       0        32.0   273.15
+      10        50.0   283.15
+      20        68.0   293.15
+      30        86.0   303.15
+      40       104.0   313.15
+
+98.6 F = 37.0 C (body temperature)
+451 F = 232.8 C (paper burns)
+-40 F = -40.0 C (same in both scales)
+100 F = 37.8 C (hot day)
+
+Exact result of 100 F -> C:  37.77777777777778
+Rounded to 2 places:         37.78
+-20 C in Kelvin, not rounded: 253.14999999999998

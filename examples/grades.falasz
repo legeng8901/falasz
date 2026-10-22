@@ -1,0 +1,124 @@
+# Grade report: reads "name score" lines from standard input until the end
+# of input, reports invalid lines instead of stopping, then prints a table,
+# the average, the best student and how many students got each grade.
+#
+#   falasz run grades.falasz < grades.in
+
+FUNC split_words(line)
+    LET words = []
+    LET current = ""
+    FOR ch IN line
+        IF ch == " "
+            IF current != ""
+                words = words + [current]
+                current = ""
+            END
+        ELSE
+            current = current + ch
+        END
+    END
+    IF current != ""
+        words = words + [current]
+    END
+    RETURN words
+END
+
+FUNC is_digits(text)
+    IF text == ""
+        RETURN FALSE
+    END
+    FOR ch IN text
+        IF ch < "0" OR ch > "9"
+            RETURN FALSE
+        END
+    END
+    RETURN TRUE
+END
+
+# v0.1 has no exceptions: report problems in the returned MAP instead.
+FUNC parse_line(line)
+    LET words = split_words(line)
+    IF LEN(words) != 2
+        RETURN {"ok": FALSE, "error": "expected 'name score'"}
+    END
+    IF NOT is_digits(words[1])
+        RETURN {"ok": FALSE, "error": "score '" + words[1] + "' is not a whole number"}
+    END
+    LET score = INT(words[1])
+    IF score > 100
+        RETURN {"ok": FALSE, "error": "score " + STR(score) + " is above 100"}
+    END
+    RETURN {"ok": TRUE, "name": words[0], "score": score}
+END
+
+FUNC letter(score)
+    IF score >= 90
+        RETURN "A"
+    ELSE IF score >= 75
+        RETURN "B"
+    ELSE IF score >= 60
+        RETURN "C"
+    ELSE IF score >= 50
+        RETURN "D"
+    END
+    RETURN "F"
+END
+
+FUNC pad(text, width)
+    LET result = text
+    WHILE LEN(result) < width
+        result = result + " "
+    END
+    RETURN result
+END
+
+FUNC round2(x)
+    RETURN INT(x * 100 + 0.5) / 100
+END
+
+LET students = []
+LET line_no = 0
+LET line = INPUT()
+WHILE line != NULL
+    line_no = line_no + 1
+    IF line != ""
+        LET result = parse_line(line)
+        IF result["ok"]
+            students = students + [result]
+        ELSE
+            SAY "Line " + STR(line_no) + " skipped: " + result["error"]
+        END
+    END
+    line = INPUT()
+END
+
+SAY ""
+IF LEN(students) == 0
+    SAY "No valid scores."
+ELSE
+    LET counts = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
+    LET total = 0
+    LET best = students[0]
+    SAY pad("Name", 10) + pad("Score", 7) + "Grade"
+    FOR s IN students
+        LET grade = letter(s["score"])
+        SAY pad(s["name"], 10) + pad(STR(s["score"]), 7) + grade
+        counts[grade] = counts[grade] + 1
+        total = total + s["score"]
+        IF s["score"] > best["score"]
+            best = s
+        END
+    END
+    SAY ""
+    SAY "Students: " + STR(LEN(students))
+    SAY "Average:  " + STR(round2(total / LEN(students)))
+    SAY "Best:     " + best["name"] + " (" + STR(best["score"]) + ")"
+    LET summary = ""
+    FOR key IN counts
+        IF summary != ""
+            summary = summary + ", "
+        END
+        summary = summary + key + "=" + STR(counts[key])
+    END
+    SAY "Grades:   " + summary
+END

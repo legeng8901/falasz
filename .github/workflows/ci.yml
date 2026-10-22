@@ -87,8 +87,20 @@ jobs:
           "$BIN/falasz" run --sensors-mock thermostat.sensors.json thermostat.falasz | diff - thermostat.out
           "$BIN/falasz" run stats.falasz < stats.in | diff - stats.out
           (cd weather && "$BIN/falasz" run --sensors-mock main.sensors.json main.falasz | diff - main.out)
+          (cd budget && "$BIN/falasz" run main.falasz | diff - main.out)
           set +e
           "$BIN/falasz" run error_trace.falasz > /dev/null 2>&1
           test $? -eq 1 || { echo "expected exit code 1"; exit 1; }
           "$BIN/falasz" run missing.falasz > /dev/null 2>&1
           test $? -eq 2 || { echo "expected exit code 2"; exit 1; }
+
+      # What docs/getting-started.md recommends: pipx puts "falasz" on PATH, so
+      # it runs without naming any virtual environment.
+      - name: Install with pipx and run "falasz" from PATH
+        shell: bash
+        run: |
+          pipx install --python python dist/*.whl
+          cd "$TEMP_DIR/ex"
+          command -v falasz || { echo "falasz is not on PATH (PIPX_BIN_DIR=$PIPX_BIN_DIR)"; exit 1; }
+          test "$(falasz --version)" = "falasz 0.1.0a0"
+          falasz run grades.falasz < grades.in | diff - grades.out

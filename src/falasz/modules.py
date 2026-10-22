@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 
 from . import nodes as n
 from .errors import FalaszError, FalaszImportError, Pos
-from .lexer import decode_source
+from .lexer import MAX_SOURCE_BYTES, decode_source
 from .parser import parse
 from .stdlib import STDLIB_EXPORTS
 from .validator import validate
@@ -110,7 +110,7 @@ class ModuleLoader:
     def read_source(self, file: SourceFile) -> str | None:
         try:
             with open(file.key, "rb") as f:
-                data = f.read()
+                data = f.read(MAX_SOURCE_BYTES + 1)  # enough to detect an oversized file (or /dev/zero)
             return decode_source(data, file.display)
         except FalaszError as err:
             file.errors.append(err)

@@ -1,0 +1,81 @@
+# Caesar cipher: shifts letters by a fixed amount, keeps letter case,
+# spaces and punctuation, then breaks an intercepted message by trying
+# every shift until a known word appears.
+
+LET LOWER = "abcdefghijklmnopqrstuvwxyz"
+LET UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+FUNC index_of(text, ch)
+    LET i = 0
+    WHILE i < LEN(text)
+        IF text[i] == ch
+            RETURN i
+        END
+        i = i + 1
+    END
+    RETURN -1
+END
+
+FUNC contains(text, word)
+    LET i = 0
+    WHILE i + LEN(word) <= LEN(text)
+        LET j = 0
+        WHILE j < LEN(word) AND text[i + j] == word[j]
+            j = j + 1
+        END
+        IF j == LEN(word)
+            RETURN TRUE
+        END
+        i = i + 1
+    END
+    RETURN FALSE
+END
+
+FUNC shift_char(ch, shift)
+    LET i = index_of(LOWER, ch)
+    IF i >= 0
+        RETURN LOWER[(i + shift) % 26]
+    END
+    i = index_of(UPPER, ch)
+    IF i >= 0
+        RETURN UPPER[(i + shift) % 26]
+    END
+    RETURN ch
+END
+
+FUNC encrypt(text, shift)
+    LET result = ""
+    FOR ch IN text
+        result = result + shift_char(ch, shift)
+    END
+    RETURN result
+END
+
+FUNC decrypt(text, shift)
+    RETURN encrypt(text, 26 - shift % 26)
+END
+
+LET message = "Hello, World! Falasz v0.1"
+LET secret = encrypt(message, 3)
+SAY "Plain:      " + message
+SAY "Encrypted:  " + secret
+SAY "Decrypted:  " + decrypt(secret, 3)
+SAY "ROT13 x2:   " + encrypt(encrypt(message, 13), 13)
+SAY ""
+
+LET intercepted = encrypt("Meet me at the old bridge at noon", 11)
+SAY "Intercepted: " + intercepted
+LET shift = 1
+LET found = FALSE
+WHILE shift < 26 AND NOT found
+    IF contains(decrypt(intercepted, shift), " the ")
+        found = TRUE
+    ELSE
+        shift = shift + 1
+    END
+END
+IF found
+    SAY "Shift " + STR(shift) + ":    " + decrypt(intercepted, shift)
+ELSE
+    SAY "No shift produces the word 'the'"
+END

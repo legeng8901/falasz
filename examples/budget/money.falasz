@@ -1,0 +1,40 @@
+# Money as whole cents (INTEGER), so sums are exact: 0.1 + 0.2 is not exactly
+# 0.3 in FLOAT arithmetic, but 10 + 20 cents is always 30 cents.
+EXPORT parse_cents, format_cents
+
+# "84.30" -> 8430, "23.5" -> 2350, "32" -> 3200; NULL if the text is not an amount.
+FUNC parse_cents(text)
+    LET whole = ""
+    LET fraction = ""
+    LET seen_dot = FALSE
+    FOR ch IN text
+        IF ch == "."
+            IF seen_dot
+                RETURN NULL
+            END
+            seen_dot = TRUE
+        ELSE IF ch < "0" OR ch > "9"
+            RETURN NULL
+        ELSE IF seen_dot
+            fraction = fraction + ch
+        ELSE
+            whole = whole + ch
+        END
+    END
+    IF whole == "" OR LEN(fraction) > 2
+        RETURN NULL
+    END
+    WHILE LEN(fraction) < 2
+        fraction = fraction + "0"
+    END
+    RETURN INT(whole) * 100 + INT(fraction)
+END
+
+# 8430 -> "84.30"
+FUNC format_cents(cents)
+    LET fraction = STR(cents % 100)
+    IF LEN(fraction) < 2
+        fraction = "0" + fraction
+    END
+    RETURN STR(INT((cents - cents % 100) / 100)) + "." + fraction
+END

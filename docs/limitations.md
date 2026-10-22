@@ -1,12 +1,15 @@
 # Falasz — current limitations
 
-State for **0.1.0a0** (after stage 7: CLI, packaging, CI workflow).
+State for **0.1.0a0** (release preparation).
 
-## Not verified yet
+## Verification status
 
-| Item | Where | Status |
-|---|---|---|
-| Verification on real Windows | CI | the GitHub Actions workflow is prepared but has never run; locally only Linux (Python 3.12, 3.13, 3.14) was tested |
+| Item | Status |
+|---|---|
+| Linux, Python 3.12 / 3.13 / 3.14 | full test suite passes locally and in GitHub Actions (Ubuntu 24.04) |
+| Windows, Python 3.12 / 3.13 / 3.14 | full test suite passes in GitHub Actions (Windows Server 2025); 5 POSIX-only tests are skipped there |
+| Ubuntu 26.04 (next `ubuntu-latest`) | full test suite passes locally in a container; not yet in GitHub Actions |
+| `falasz` on `PATH` after `pipx install` | verified locally on Linux; the Windows check is in the CI workflow but has not run yet |
 
 ## Outside v0.1 (decided)
 
@@ -23,6 +26,13 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 - No way to add to a LIST other than `xs = xs + [x]` (creates a new list each time,
   O(n) per append).
 - No string functions (split, upper, slicing) besides indexing and `LEN`.
+- String escapes are only `\"`, `\\`, `\n`, `\t`: a carriage return (`\r`) or
+  other control character cannot be written in a literal. Text read from a file
+  with Windows line endings contains `\r`; it can be filtered out only by
+  comparison (`ch < " "`), see `examples/budget/csv.falasz`.
+- No rounding function: a FLOAT is printed with all its digits
+  (`37.77777777777778`); rounding has to be written by hand
+  (`examples/temperature.falasz`).
 - No way to ask for the type of a value (no `TYPE()`); code that handles mixed
   values has to inspect `STR(x)`.
 
@@ -37,6 +47,8 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 ## Implementation limits
 
 - One syntax error per file is reported (parser stops at the first one, N7).
+- A statement ends at the end of its line; an expression continues on the next
+  line only inside `( )`, `[ ]` or `{ }`.
 - Very long `ELSE IF` chains (~200 branches) hit the nesting limit (N8).
 - Nested values deeper than 500 levels cannot be printed or compared (`LimitError`).
 - INTEGER <-> text conversion is limited to 4300 digits (Python's limit, `LimitError`).
@@ -46,7 +58,22 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 - `files` has only `read_text`/`write_text` (no listing, deleting, appending,
   existence check).
 - Windows-specific path rules (drive-relative paths, device names) are unit-tested
-  with `ntpath` on Linux only; real Windows runs come with CI in stage 7.
+  with `ntpath` and also run on real Windows in CI.
 - At most 500 active user-function calls (`RecursionLimitError`); no tail-call optimisation.
 - Closures created in a loop share the loop variable (loops have no scope, P6).
 - Tree-walking interpreter: performance is not a goal of v0.1.
+
+## Resource limits that do not exist yet
+
+The limits above stop runaway programs; they do not bound memory or the work
+done by a single step. Untrusted programs need OS-level limits (memory, time).
+
+- No memory limit. A program that keeps doubling a STRING or LIST runs until
+  the operating system refuses more memory; the interpreter then stops with
+  `InternalError: MemoryError` (exit code 70), which wrongly suggests a bug.
+- INTEGER has no size limit. Repeated squaring makes numbers so large that a
+  single multiplication takes minutes; `--max-steps` counts statements, not the
+  work inside one, so it cannot stop this.
+- `INPUT()` reads a whole line however long it is.
+- `files.read_text` on a named pipe (FIFO) waits until another process writes to
+  it.

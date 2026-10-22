@@ -38,6 +38,19 @@ First alpha of the language and its reference interpreter.
 - GitHub Actions workflow for Linux and Windows (prepared, not yet run).
 - Released under the MIT License; author metadata in the package.
 
+### Documentation and examples
+- Getting started guide for Linux and Windows
+  ([docs/getting-started.md](docs/getting-started.md)); installation with pipx
+  so that `falasz` is on `PATH`.
+- New examples: Caesar cipher, grade report from standard input, temperature
+  converter, monthly budget from a CSV file (modules + files).
+- The code in README and the guide is run by the test suite.
+
+### Fixed before release
+- A source file is read only up to the 1 MiB limit: `falasz check /dev/zero`
+  or a huge module now gives `LimitError` (exit code 3) instead of running out
+  of memory and reporting an internal error.
+
 ### Known limitations
 - See [docs/limitations.md](docs/limitations.md). Planned after v0.1:
   `HAS`, `APPEND`, `TYPE`, an optional `files` directory restriction.

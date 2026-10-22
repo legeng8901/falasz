@@ -1,0 +1,54 @@
+# Temperature converter: Celsius, Fahrenheit and Kelvin. Shows that "/"
+# always gives a FLOAT and how to round a FLOAT for display.
+
+FUNC c_to_f(c)
+    RETURN c * 9 / 5 + 32
+END
+
+FUNC f_to_c(f)
+    RETURN (f - 32) * 5 / 9
+END
+
+FUNC c_to_k(c)
+    RETURN c + 273.15
+END
+
+# Rounds to `digits` decimal places, halves away from zero:
+# round_to(2.25, 1) -> 2.3, round_to(-2.25, 1) -> -2.3.
+FUNC round_to(x, digits)
+    IF x < 0
+        RETURN -round_to(-x, digits)
+    END
+    LET factor = 1
+    FOR i IN RANGE(0, digits)
+        factor = factor * 10
+    END
+    RETURN INT(x * factor + 0.5) / factor
+END
+
+FUNC pad_left(text, width)
+    LET result = text
+    WHILE LEN(result) < width
+        result = " " + result
+    END
+    RETURN result
+END
+
+SAY pad_left("Celsius", 8) + pad_left("Fahrenheit", 12) + pad_left("Kelvin", 9)
+FOR c IN RANGE(-20, 41, 10)
+    # A long expression may continue on the next line only inside brackets.
+    SAY (pad_left(STR(c), 8) + pad_left(STR(round_to(c_to_f(c), 1)), 12)
+        + pad_left(STR(round_to(c_to_k(c), 2)), 9))
+END
+
+SAY ""
+LET readings = {"body temperature": 98.6, "paper burns": 451, "same in both scales": -40, "hot day": 100}
+FOR name IN readings
+    LET f = readings[name]
+    SAY STR(f) + " F = " + STR(round_to(f_to_c(f), 1)) + " C (" + name + ")"
+END
+
+SAY ""
+SAY "Exact result of 100 F -> C:  " + STR(f_to_c(100))
+SAY "Rounded to 2 places:         " + STR(round_to(f_to_c(100), 2))
+SAY "-20 C in Kelvin, not rounded: " + STR(c_to_k(-20))

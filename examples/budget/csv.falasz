@@ -1,0 +1,51 @@
+# Minimal CSV reading: the first line holds the column names, the other lines
+# hold comma-separated fields (quoted fields are not supported).
+# Control characters are dropped, so files saved with Windows line endings
+# ("\r\n") work too: v0.1 has no "\r" escape, but every control character
+# sorts before " ".
+EXPORT read_rows, split
+
+IMPORT files
+
+FUNC split(text, separator)
+    LET parts = []
+    LET current = ""
+    FOR ch IN text
+        IF ch == separator
+            parts = parts + [current]
+            current = ""
+        ELSE IF ch >= " "
+            current = current + ch
+        END
+    END
+    RETURN parts + [current]
+END
+
+# Returns {"rows": LIST of MAPs (column name -> text), "errors": LIST of STRINGs}.
+FUNC read_rows(path)
+    LET rows = []
+    LET errors = []
+    LET header = NULL
+    LET line_no = 0
+    FOR line IN split(files.read_text(path), "\n")
+        line_no = line_no + 1
+        IF line != ""
+            LET fields = split(line, ",")
+            IF header == NULL
+                header = fields
+            ELSE IF LEN(fields) != LEN(header)
+                errors = errors + ["line " + STR(line_no) + ": expected " + STR(LEN(header))
+                    + " fields, found " + STR(LEN(fields))]
+            ELSE
+                LET row = {}
+                LET i = 0
+                WHILE i < LEN(header)
+                    row[header[i]] = fields[i]
+                    i = i + 1
+                END
+                rows = rows + [row]
+            END
+        END
+    END
+    RETURN {"rows": rows, "errors": errors}
+END

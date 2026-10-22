@@ -1,0 +1,17 @@
+Line 5 skipped: score 'abc' is not a whole number
+Line 6 skipped: score 105 is above 100
+Line 9 skipped: expected 'name score'
+
+Name      Score  Grade
+Anna      92     A
+Bartek    78     B
+Celina    85     B
+Filip     59     D
+Gosia     100    A
+Iga       47     F
+Jan       74     C
+
+Students: 7
+Average:  76.43
+Best:     Gosia (100)
+Grades:   A=2, B=2, C=1, D=1, F=1

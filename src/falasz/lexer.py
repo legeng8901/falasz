@@ -15,9 +15,7 @@ _CLOSERS = {T.RPAREN, T.RBRACKET, T.RBRACE}
 def decode_source(data: bytes, path: str) -> str:
     """Decode a source file: size limit, optional BOM, strict UTF-8."""
     if len(data) > MAX_SOURCE_BYTES:
-        raise FalaszLimitError(
-            f"source file is {len(data)} bytes, limit is {MAX_SOURCE_BYTES}", path
-        )
+        raise FalaszLimitError(f"source file is larger than the limit of {MAX_SOURCE_BYTES} bytes", path)
     if data.startswith(b"\xef\xbb\xbf"):
         data = data[3:]
     try:

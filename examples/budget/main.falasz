@@ -1,0 +1,89 @@
+# Monthly budget: reads expenses.csv, adds up the amounts per category,
+# compares them with the monthly limits and saves report.txt next to this
+# script. Invalid lines are listed, not fatal.
+IMPORT files
+IMPORT LOCAL csv
+IMPORT LOCAL money
+
+# Limits in cents.
+LET LIMITS = {"food": 20000, "transport": 10000, "home": 25000, "fun": 5000}
+
+# v0.1 has no HAS(map, key) yet: look through the keys instead.
+FUNC has_key(map, key)
+    FOR k IN map
+        IF k == key
+            RETURN TRUE
+        END
+    END
+    RETURN FALSE
+END
+
+FUNC pad_right(text, width)
+    LET result = text
+    WHILE LEN(result) < width
+        result = result + " "
+    END
+    RETURN result
+END
+
+FUNC pad_left(text, width)
+    LET result = text
+    WHILE LEN(result) < width
+        result = " " + result
+    END
+    RETURN result
+END
+
+LET data = csv.read_rows("expenses.csv")
+LET problems = data["errors"]
+LET totals = {}
+FOR row IN data["rows"]
+    LET cents = money.parse_cents(row["amount"])
+    IF cents == NULL
+        problems = problems + [row["date"] + " " + row["description"]
+            + ": invalid amount '" + row["amount"] + "'"]
+    ELSE
+        IF NOT has_key(totals, row["category"])
+            totals[row["category"]] = 0
+        END
+        totals[row["category"]] = totals[row["category"]] + cents
+    END
+END
+
+LET lines = [pad_right("Category", 12) + pad_left("Spent", 10) + pad_left("Limit", 10) + "  Status"]
+LET grand_total = 0
+FOR category IN totals
+    LET spent = totals[category]
+    grand_total = grand_total + spent
+    LET limit_text = "-"
+    LET status = "no limit set"
+    IF has_key(LIMITS, category)
+        limit_text = money.format_cents(LIMITS[category])
+        IF spent > LIMITS[category]
+            status = "OVER by " + money.format_cents(spent - LIMITS[category])
+        ELSE
+            status = "ok"
+        END
+    END
+    lines = lines + [pad_right(category, 12) + pad_left(money.format_cents(spent), 10)
+        + pad_left(limit_text, 10) + "  " + status]
+END
+lines = lines + ["Total spent: " + money.format_cents(grand_total)]
+
+LET report = ""
+FOR line IN lines
+    report = report + line + "\n"
+    SAY line
+END
+
+IF LEN(problems) > 0
+    SAY ""
+    SAY "Skipped:"
+    FOR problem IN problems
+        SAY "  " + problem
+    END
+END
+
+files.write_text("report.txt", report)
+SAY ""
+SAY "Report saved to report.txt (" + STR(LEN(report)) + " characters)."

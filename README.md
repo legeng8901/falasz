@@ -36,18 +36,22 @@ Hello, Daniel
 ## Installation
 
 Falasz needs Python 3.12 or newer on Linux or Windows. It has no dependencies.
+**[docs/getting-started.md](docs/getting-started.md)** walks through installing on
+Linux and Windows, a first program and a tour of the language.
 
-From a source checkout:
+The recommended way is [pipx](https://pipx.pypa.io/), which puts the `falasz`
+command on your `PATH`:
+
+```console
+pipx install ./falasz              # a source checkout (Windows: .\falasz)
+pipx install falasz-0.1.0a0-py3-none-any.whl
+```
+
+Into a virtual environment, from a source checkout:
 
 ```console
 python -m venv .venv
 .venv/bin/pip install .            # Windows: .venv\Scripts\pip install .
-```
-
-From a built wheel:
-
-```console
-pip install falasz-0.1.0a0-py3-none-any.whl
 ```
 
 `python -m falasz` works everywhere the `falasz` command does.
@@ -109,9 +113,10 @@ The full, normative description is in [docs/spec.md](docs/spec.md) (in Polish).
   (relative paths use the main script's directory), `sensors.available()`,
   `sensors.read(name)` (see [docs/sensors.md](docs/sensors.md)).
 
-More programs are in [examples/](examples/): FizzBuzz, primes, statistics from
-standard input, recursion, closures, a multi-file notes app, a thermostat and a
-weather station driven by mock sensors.
+More programs are in [examples/](examples/): FizzBuzz, primes, statistics and a
+grade report from standard input, a Caesar cipher, a temperature converter,
+recursion, closures, a multi-file notes app, a monthly budget from a CSV file,
+and a thermostat and a weather station driven by mock sensors.
 
 ## Safety notes
 
@@ -138,8 +143,9 @@ python -m venv .venv
 | `tests/spec_examples/` | example programs from the specification with expected output or error position |
 | `tests/test_cli.py` | end-to-end tests of the `falasz` command (real processes) |
 | `tests/test_robustness.py` | random programs: must never crash the interpreter |
+| `tests/test_docs.py` | the code in README and the getting started guide runs and prints what the text says |
 | `examples/` | example programs with recorded output (`.out`), input (`.in`) and sensor data |
-| `docs/` | specification, sensors API, limitations |
+| `docs/` | getting started guide, specification, sensors API, limitations |
 | `.github/workflows/ci.yml` | GitHub Actions: tests on Linux and Windows, Python 3.12–3.14, package install |
 
 ## License

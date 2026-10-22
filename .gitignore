@@ -4,3 +4,7 @@ __pycache__/
 .pytest_cache/
 build/
 dist/
+
+# Files written by the example programs when run in place
+examples/notes/notes.txt
+examples/budget/report.txt
