@@ -1,0 +1,7 @@
+# The source distribution carries everything needed to run the test suite.
+include CHANGELOG.md README.md .gitattributes
+graft docs
+graft examples
+graft tests
+graft .github
+global-exclude __pycache__ *.py[cod]

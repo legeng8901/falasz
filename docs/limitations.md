@@ -1,13 +1,12 @@
 # Falasz — current limitations
 
-State after **stage 6** (sensors with a mock provider). Updated at every stage.
+State for **0.1.0a0** (after stage 7: CLI, packaging, CI workflow).
 
-## Not implemented yet (planned for v0.1)
+## Not verified yet
 
-| Feature | Stage | Current behaviour |
+| Item | Where | Status |
 |---|---|---|
-| `falasz` command (`run`, `check`, `--version`), exit codes, `--max-steps`, `--sensors-mock`, warnings | 7 | only the Python API exists: `falasz.runtime.run_file` / `check_file`; mock sensors via `sensors=MockSensorProvider...` |
-| Windows verification (CI) | 7 | tested only on Linux (Fedora, Python 3.14) |
+| Verification on real Windows | CI | the GitHub Actions workflow is prepared but has never run; locally only Linux (Python 3.12, 3.13, 3.14) was tested |
 
 ## Outside v0.1 (decided)
 

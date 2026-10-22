@@ -160,7 +160,7 @@ def test_path_through_a_file(tmp_path):
 
 @pytest.mark.parametrize("path, fragment", [
     ('""', "must not be empty"),
-    ('"a\\nb"', "no such file"),
+    ('"a\\nb"', "cannot read"),  # reason is OS-specific: Linux "no such file", Windows "Invalid argument"
 ])
 def test_odd_paths(tmp_path, path, fragment):
     file_error(tmp_path, f"IMPORT files\nSAY files.read_text({path})\n", fragment)

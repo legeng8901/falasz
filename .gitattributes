@@ -1,0 +1,4 @@
+# Falasz guarantees identical behaviour on Linux and Windows; expected-output
+# files are compared byte for byte, so text files must keep LF everywhere
+# (Windows runners default to core.autocrlf=true).
+* text=auto eol=lf

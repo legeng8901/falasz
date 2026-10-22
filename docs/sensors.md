@@ -71,7 +71,7 @@ code 2):
 
 | Problem | Example |
 |---|---|
-| invalid JSON (message has line and column) | `{"a": 1,}` |
+| invalid JSON (message has line and column; the exact text and column come from Python's `json` module and can differ slightly between Python versions) | `{"a": 1,}` |
 | top level is not an object | `[1, 2]` |
 | invalid name | `{"temp erature": 1}`, `{"": 1}` |
 | duplicate name | `{"a": 1, "a": 2}` |

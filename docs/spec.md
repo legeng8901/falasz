@@ -3,7 +3,7 @@
 Status: **ZATWIERDZONA z poprawkami (2026-10-22)**. Sekcje oznaczone *[zamrożone]*
 stanowią minimalne API v0.1 i zmieniają się tylko przez wpis w CHANGELOG.
 Szczegóły zaprojektowane na podstawie poprawek właściciela (P6, P11, P12, P16) są
-opisane w sekcji 12 jako N1–N6 — do potwierdzenia, ale gramatyka już je obejmuje.
+opisane w sekcji 12 jako N1–N8 (zatwierdzone 2026-10-22).
 
 Decyzje właściciela:
 - `/` zawsze zwraca FLOAT; dzielenie przez zero to błąd czasu wykonania.
@@ -497,6 +497,7 @@ surowy traceback Pythona (chyba że `--debug`).
 | 2 | błędne użycie CLI (argumenty, brak pliku wejściowego) |
 | 3 | błąd składni / walidacji statycznej (w tym `ImportError` wykryty statycznie) |
 | 70 | `InternalError` |
+| 130 | przerwanie przez użytkownika (Ctrl+C) |
 
 ### 11.4 CLI
 - `falasz run [--sensors-mock FILE] [--max-steps N] FILE` — walidacja całego programu
@@ -507,6 +508,12 @@ surowy traceback Pythona (chyba że `--debug`).
   (parser nie kontynuuje po błędzie, aby nie zgłaszać błędów pochodnych) oraz
   wszystkie błędy walidacji nazw z plików poprawnych składniowo.
 - `falasz --version` → `falasz 0.1.0a0`.
+- `falasz --debug …` — przy `InternalError` dodatkowo traceback Pythona.
+- Wyjście programu (`SAY`, monit `INPUT`) trafia na stdout w UTF-8 z `\n` na każdej
+  platformie; `INPUT` czyta stdin jako bajty UTF-8. Diagnostyka, ostrzeżenia i ślad
+  stosu trafiają na stderr. `check` kończy listę błędów linią `N error(s) found`.
+- Niepoprawny plik `--sensors-mock` lub nieczytelny plik wejściowy → kod 2, zanim
+  cokolwiek zostanie wykonane.
 
 ## 12. Rejestr decyzji
 
@@ -531,7 +538,7 @@ surowy traceback Pythona (chyba że `--debug`).
 | P15 | Kody wyjścia | 0/1/2/3/70 |
 | P16 | Zakres v0.1 | **zmienione:** `INPUT()` w v0.1; poza v0.1: `TRY/CATCH`, lambdy, metody list, interpolacja tekstu, notacja `1e5` |
 
-### 12.2 Szczegóły zaprojektowane przez Claude — do potwierdzenia
+### 12.2 Szczegóły zaprojektowane przez Claude — zatwierdzone 2026-10-22
 
 | # | Temat | Propozycja |
 |---|---|---|
@@ -588,6 +595,14 @@ dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
 | E20 | Wyczerpana sekwencja | każdy kolejny `read` → `SensorError`; czujnik nadal widoczny w `available()` |
 | E21 | Dane mock | sekwencje mogą mieszać typy; `null`, zagnieżdżenia, pusta tablica, NaN/Infinity, duplikaty → błąd konfiguracji przed startem |
 | E22 | Błędy dostawcy | wyjątek lub niepoprawna wartość od dostawcy → `SensorError` z nazwą czujnika |
+
+### 12.7 Ustalone w Etapie 7 — zatwierdzone 2026-10-22
+
+| # | Temat | Propozycja |
+|---|---|---|
+| E23 | Ctrl+C | komunikat `falasz: interrupted`, kod wyjścia 130 |
+| E24 | Zamknięty potok wyjścia (`falasz run p.falasz \| head`) | cicho, kod 1, bez `InternalError` |
+| E25 | Podsumowanie `check` | ostatnia linia na stderr: `N error(s) found` |
 
 ## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
 
