@@ -175,6 +175,13 @@ FUNCTION i MODULE są typami wewnętrznymi (wartości pierwszej klasy, ale nie m
 literałów). Spec pierwotna wymienia 7 typów użytkowych — te dwa są dodatkowe.
 
 Klucze MAP: tylko INTEGER, STRING, BOOLEAN. Inny typ klucza → `TypeError`.
+Powtórzony klucz w literale (`{"a": 1, "a": 2}`) — wygrywa ostatnia wartość,
+pozycja w kolejności pochodzi z pierwszego wystąpienia.
+
+Struktury cykliczne (lista zawierająca samą siebie po `xs[0] = xs`) są dozwolone.
+`STR`/`SAY` wypisują powtórzone odwołanie jako `[...]` lub `{...}`; porównanie `==`
+dwóch struktur cyklicznych jest dobrze określone (nie zawiesza się).
+`-0.0` wypisywane jest jako `-0.0` i równe `0.0`.
 `TRUE` i `1` są **różnymi** kluczami (w odróżnieniu od Pythona).
 
 ### 5.1 Semantyka operatorów
@@ -256,18 +263,26 @@ zmienna pętli `FOR x`.
   istniejącą w module lub w funkcji otaczającej.
 
 ### 6.3 Odczyt i przypisanie
-- Nazwa jest rozwiązywana od zakresu bieżącego przez kolejne zakresy otaczające
-  (leksykalnie) aż do wbudowanego.
+- Nazwa jest rozwiązywana **statycznie** (leksykalnie): walidator ustala, w którym
+  zakresie — bieżącym, otaczającym lub wbudowanym — znajduje się jej deklaracja.
+  W czasie wykonania odczyt dotyczy tylko tego zakresu; nigdy nie „przecieka”
+  do zakresu zewnętrznego.
 - `x = e` przypisuje do najbliższej widocznej deklaracji `x` (także w funkcji
   otaczającej — domknięcia). Brak deklaracji → `NameError`.
 - **Kolejność statyczna:** w obrębie jednego zakresu nazwa musi być zadeklarowana
   w tekście **przed** pierwszym użyciem (odczytem lub przypisaniem) → inaczej `NameError`.
+  Wyrażenie inicjujące należy do tekstu przed deklaracją: w `LET x = x + 1` prawe `x`
+  jest użyte przed deklaracją. Jeśli `x` jest zadeklarowane gdziekolwiek w bieżącym
+  zakresie, użycie odnosi się do tej deklaracji, a nie do zakresu zewnętrznego.
   Wyjątek (P7): ciało funkcji widzi wszystkie nazwy zakresów otaczających,
   także zadeklarowane w tekście później.
-- **Niezainicjalizowana zmienna:** jeśli deklaracja istnieje, ale nie została wykonana
-  (np. `LET` w gałęzi `IF`, która się nie wykonała; pętla `FOR` bez iteracji),
-  odczyt → `NameError` w czasie wykonania („variable 'x' is not initialized”).
-  Przypisanie `x = e` do takiej zmiennej ją inicjalizuje.
+- **Zmienna powstaje w chwili wykonania deklaracji (N2):** `LET` tworzy zmienną
+  dopiero po obliczeniu wyrażenia; `FUNC` — w chwili wykonania instrukcji; zmienna
+  `FOR` — przy pierwszym przypisaniu elementu; `IMPORT` — w chwili importu. Jeśli
+  deklaracja nie została wykonana (np. `LET` w gałęzi `IF`, która się nie wykonała;
+  pętla `FOR` bez iteracji), zmienna **nie istnieje**: zarówno odczyt, jak i
+  przypisanie `x = e` → `NameError` w czasie wykonania
+  („variable 'x' does not exist: its declaration was not executed”).
 
 ### 6.4 Funkcje i domknięcia
 - `FUNC f(...)` wiąże `f` w chwili wykonania instrukcji — **brak hoistingu** (P7).
@@ -310,7 +325,7 @@ Etap nazw (walidator):
 | `RANGE` | `RANGE(start, stop)`, `RANGE(start, stop, step)` | LIST INTEGER, `stop` wyłączny; argumenty INTEGER; `step == 0` → `ValueError`; długość > limitu → `LimitError` (P13) |
 | `STR` | `STR(x)` | reprezentacja jak w tabeli z sekcji 5 |
 | `INT` | `INT(x)` | INT→INT; FLOAT→obcięcie w stronę zera; STRING w postaci `-?[0-9]+` → INT, inny tekst (także ze spacjami) → `ValueError`; inne typy → `TypeError` |
-| `FLOAT` | `FLOAT(x)` | INT/FLOAT→FLOAT; STRING w postaci literału FLOAT lub INTEGER z opcjonalnym `-` → FLOAT, inaczej `ValueError` |
+| `FLOAT` | `FLOAT(x)` | INT/FLOAT→FLOAT; STRING w postaci `-?[0-9]+(\.[0-9]+)?` → FLOAT, inny tekst → `ValueError`; wynik poza zakresem FLOAT → `ArithmeticError`; inne typy → `TypeError` |
 | `LEN` | `LEN(x)` | STRING (punkty kodowe), LIST, MAP → INT; inne → `TypeError` |
 | `INPUT` | `INPUT()`, `INPUT(prompt)` | patrz 8.1 |
 
@@ -363,7 +378,7 @@ Etap nazw (walidator):
 - **Nazwy nieeksportowane są prywatne.** `m.x` dla nieeksportowanego `x` → `NameError`
   („module 'm' does not export 'x'”).
 - `m.x` odczytuje **bieżącą** wartość zmiennej modułu (wiązanie na żywo); z zewnątrz
-  tylko do odczytu. Odczyt niezainicjalizowanej eksportowanej zmiennej → `NameError`.
+  tylko do odczytu. Odczyt eksportowanej zmiennej, która nie istnieje (N2) → `NameError`.
 - `EXPORT` w głównym skrypcie jest dozwolony (plik może być zarówno skryptem, jak i modułem).
 
 ### 9.3 `files`
@@ -403,6 +418,8 @@ Eksportuje: `available`, `read`.
 | Liczba kroków interpretera | bez limitu w CLI; konfigurowalna (`--max-steps N`) | `LimitError` |
 | Długość wyniku `RANGE` | 10 000 000 | `LimitError` |
 | Rozmiar pliku w `files.read_text` | 16 MiB | `FileError` |
+| Głębokość zagnieżdżenia wartości przy `STR`, `SAY`, `==` | 500 | `LimitError` |
+| Liczba cyfr przy konwersji INTEGER ↔ tekst (literał, `STR`, `INT`, `SAY`) | 4300 (limit Pythona) | `LimitError` |
 
 Limity służą testom i niezaufanym danym; nie zastępują izolacji systemu operacyjnego.
 
@@ -438,6 +455,7 @@ Na co wskazuje lokalizacja błędu:
 - `RETURN`/`BREAK`/`CONTINUE`/`IMPORT`/`EXPORT` w złym miejscu, błąd rozwiązania
   importu (brak pliku, cykl) — słowo kluczowe `IMPORT`/odpowiednie słowo kluczowe;
 - brak `END` — koniec pliku; niezamknięty tekst — otwierający `"`;
+- błąd konwersji wartości na tekst w `SAY` (np. `LimitError`) — słowo kluczowe `SAY`;
 - pozostałe błędy składni — pierwszy nieoczekiwany token.
 
 ### 11.2 Kategorie
@@ -504,7 +522,33 @@ surowy traceback Pythona (chyba że `--debug`).
 | N7 | `falasz check` (11.4) | jeden (pierwszy) błąd składni na plik; wszystkie błędy walidacji nazw |
 | N8 | Limit zagnieżdżenia (10) | każde `ELSE IF` liczy się jako poziom zagnieżdżenia — łańcuch dłuższy niż ~200 gałęzi → `SyntaxError` |
 
-## 13. Przykłady
+N1–N8 zatwierdzone 2026-10-22; N2 doprecyzowane przez właściciela: zmienna powstaje
+dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
+
+### 12.3 Przypadki brzegowe ustalone w Etapie 3 — zatwierdzone 2026-10-22
+
+| # | Temat | Propozycja |
+|---|---|---|
+| E1 | Powtórzony klucz w literale MAP | ostatnia wartość wygrywa |
+| E2 | Struktury cykliczne | dozwolone; `[...]`/`{...}` w `STR`; `==` się kończy |
+| E3 | Limity wartości | zagnieżdżenie 500, konwersja INTEGER↔tekst 4300 cyfr → `LimitError` |
+| E4 | `FLOAT("007")`, `INT("007")` | dozwolone (zera wiodące tylko w tekście, nie w literałach źródła) |
+| E5 | `-0.0` | wypisywane jako `-0.0`, równe `0.0` |
+| E6 | Krok interpretera (`--max-steps`) | każda wykonana instrukcja i każda iteracja pętli |
+| E7 | Kolejność obliczeń w przypisaniu | najpierw prawa strona, potem cel (`x[i] = e`: `e`, potem `x`, potem `i`) |
+| E8 | Równość MAP | niezależna od kolejności wstawiania (`{"a": 1, "b": 2} == {"b": 2, "a": 1}` → `TRUE`) |
+| E9 | Klucz MAP złego typu w literale | `TypeError` wskazuje początek wyrażenia klucza |
+
+## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
+
+Zgłoszone przez właściciela do realizacji **po** ukończeniu v0.1 — nie implementować wcześniej:
+- `HAS(map, key)` → BOOLEAN — sprawdzenie obecności klucza w MAP;
+- `APPEND(list, value)` — dopisanie elementu do LIST w miejscu.
+
+Kandydaci (bez decyzji): funkcje tekstowe (podział, wielkość liter, wycinki),
+`TRY/CATCH`, lambdy, interpolacja tekstu, notacja wykładnicza, kompilator.
+
+## 14. Przykłady
 
 Korpus w `tests/spec_examples/`:
 - `valid/X.falasz` + `X.out` (oczekiwane stdout) + opcjonalnie `X.in` (stdin);

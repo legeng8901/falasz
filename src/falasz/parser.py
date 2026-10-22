@@ -11,7 +11,7 @@ import sys
 from contextlib import contextmanager
 
 from . import nodes as n
-from .errors import FalaszNameError, FalaszSyntaxError, Pos
+from .errors import FalaszLimitError, FalaszNameError, FalaszSyntaxError, Pos
 from .lexer import tokenize
 from .tokens import T, Token
 
@@ -344,7 +344,12 @@ class Parser:
         match token.type:
             case T.INTEGER:
                 self.advance()
-                return n.IntLit(int(token.text), token.pos)
+                try:
+                    return n.IntLit(int(token.text), token.pos)
+                except ValueError:  # Python's int/str digit limit
+                    raise FalaszLimitError(
+                        f"integer literal has too many digits (limit {sys.get_int_max_str_digits()})",
+                        self.path, token.pos) from None
             case T.FLOAT:
                 self.advance()
                 value = float(token.text)

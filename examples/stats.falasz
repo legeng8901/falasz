@@ -1,0 +1,31 @@
+# Read numbers (one per line) until end of input, then print statistics.
+LET numbers = []
+LET line = INPUT("number> ")
+WHILE line != NULL
+    IF line != ""
+        numbers = numbers + [FLOAT(line)]
+    END
+    line = INPUT("number> ")
+END
+SAY ""
+IF LEN(numbers) == 0
+    SAY "no numbers"
+ELSE
+    LET total = 0.0
+    LET smallest = numbers[0]
+    LET largest = numbers[0]
+    FOR x IN numbers
+        total = total + x
+        IF x < smallest
+            smallest = x
+        END
+        IF x > largest
+            largest = x
+        END
+    END
+    SAY "count: " + STR(LEN(numbers))
+    SAY "sum:   " + STR(total)
+    SAY "mean:  " + STR(total / LEN(numbers))
+    SAY "min:   " + STR(smallest)
+    SAY "max:   " + STR(largest)
+END

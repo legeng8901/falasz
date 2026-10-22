@@ -1,0 +1,25 @@
+# Sieve of Eratosthenes: primes below 50.
+LET limit = 50
+LET is_prime = []
+FOR i IN RANGE(0, limit)
+    is_prime = is_prime + [i >= 2]
+END
+LET p = 2
+WHILE p * p < limit
+    IF is_prime[p]
+        LET multiple = p * p
+        WHILE multiple < limit
+            is_prime[multiple] = FALSE
+            multiple = multiple + p
+        END
+    END
+    p = p + 1
+END
+LET primes = []
+FOR i IN RANGE(0, limit)
+    IF is_prime[i]
+        primes = primes + [i]
+    END
+END
+SAY primes
+SAY "found " + STR(LEN(primes)) + " primes, 7 / 2 = " + STR(7 / 2)

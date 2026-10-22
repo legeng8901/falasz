@@ -1,0 +1,21 @@
+# Count letters in a sentence using a MAP (keys keep insertion order).
+# v0.1 has no "key exists" test, so we scan the keys ourselves.
+LET text = "ala ma kota"
+LET counts = {}
+FOR ch IN text
+    IF ch == " "
+        CONTINUE
+    END
+    LET seen = FALSE
+    FOR key IN counts
+        IF key == ch
+            seen = TRUE
+        END
+    END
+    IF NOT seen
+        counts[ch] = 0
+    END
+    counts[ch] = counts[ch] + 1
+END
+SAY counts
+SAY "distinct letters: " + STR(LEN(counts))

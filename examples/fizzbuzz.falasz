@@ -1,0 +1,12 @@
+# FizzBuzz 1..15
+FOR n IN RANGE(1, 16)
+    IF n % 15 == 0
+        SAY "FizzBuzz"
+    ELSE IF n % 3 == 0
+        SAY "Fizz"
+    ELSE IF n % 5 == 0
+        SAY "Buzz"
+    ELSE
+        SAY n
+    END
+END

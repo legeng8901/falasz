@@ -92,7 +92,7 @@ def test_module_files_have_no_expectation_files(src):
 
 # ------------------------------------------------- stage 2: parser vs. corpus
 
-from falasz.errors import FalaszSyntaxError  # noqa: E402
+from falasz.errors import FalaszError, FalaszSyntaxError  # noqa: E402
 from falasz.parser import parse  # noqa: E402
 
 SYNTAX_INVALID = [p for p in INVALID if parse_err(p)[3] == "SyntaxError"]
@@ -116,3 +116,52 @@ def test_parser_reports_expected_syntax_error(src):
 )
 def test_other_examples_parse(src):
     _parse_file(src)
+
+
+# ------------------------------------------- stage 3+: executing the corpus
+
+import io  # noqa: E402
+
+from falasz.runtime import StaticErrors, run_source  # noqa: E402
+
+CURRENT_STAGE = 3
+# Examples needing features of a later stage; everything else must pass now.
+REQUIRES_STAGE = {
+    "hello": 4, "scopes": 4, "arity": 4, "no_leak_to_outer": 4,
+    "modules": 5, "local_shadow": 5, "not_exported": 5, "import_cycle": 5, "import_missing": 5,
+}
+
+
+def _skip_if_later_stage(src):
+    stage = REQUIRES_STAGE.get(example_id(src), 0)
+    if stage > CURRENT_STAGE:
+        pytest.skip(f"requires stage {stage}")
+
+
+def _run(src):
+    out = io.StringIO()
+    stdin = src.with_suffix(".in")
+    inp = io.BytesIO(stdin.read_bytes()) if stdin.exists() else None
+    run_source(src.read_text(encoding="utf-8"), src.name, out=out, inp=inp)
+    return out.getvalue()
+
+
+@pytest.mark.parametrize("src", VALID, ids=example_id)
+def test_valid_example_output(src):
+    _skip_if_later_stage(src)
+    assert _run(src) == src.with_suffix(".out").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("src", INVALID, ids=example_id)
+def test_invalid_example_error(src):
+    _skip_if_later_stage(src)
+    path, line, col, category = parse_err(src)
+    with pytest.raises((StaticErrors, FalaszError)) as exc:
+        _run(src)
+    err = exc.value.errors[0] if isinstance(exc.value, StaticErrors) else exc.value
+    assert (err.path, err.pos, err.category) == (path.name, (line, col), category), err.format()
+
+
+def test_stage_markers_refer_to_existing_examples():
+    ids = {example_id(p) for p in VALID + INVALID}
+    assert set(REQUIRES_STAGE) <= ids

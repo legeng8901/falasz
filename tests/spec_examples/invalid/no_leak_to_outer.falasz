@@ -1,0 +1,8 @@
+LET x = "module"
+FUNC f()
+    IF FALSE
+        LET x = "local"
+    END
+    RETURN x
+END
+SAY f()

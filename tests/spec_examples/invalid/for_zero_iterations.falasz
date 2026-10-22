@@ -1,0 +1,3 @@
+FOR i IN RANGE(0, 0)
+END
+SAY i

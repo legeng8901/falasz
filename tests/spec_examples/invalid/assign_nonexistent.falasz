@@ -1,0 +1,4 @@
+IF FALSE
+    LET a = 1
+END
+a = 2

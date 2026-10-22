@@ -53,10 +53,16 @@ class NullLit(Expr):
     pos: Pos
 
 
+BUILTIN = -1  # Name.hops for names of the builtin scope
+
+
 @dataclass(slots=True)
 class Name(Expr):
     name: str
     pos: Pos
+    # Set by the validator: how many function scopes to go up to reach the
+    # declaring scope (0 = current), or BUILTIN. None = not resolved yet.
+    hops: int | None = None
 
 
 @dataclass(slots=True)
