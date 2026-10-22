@@ -463,7 +463,9 @@ surowy traceback Pythona (chyba że `--debug`).
   (z modułami), następnie wykonanie.
 - `falasz check FILE` — lexer + parser + walidacja statyczna pliku i wszystkich
   lokalnych modułów importowanych przechodnio; **nic nie wykonuje** (także modułów
-  i `INPUT`). Wypisuje `OK` lub listę błędów (wszystkie znalezione, nie tylko pierwszy).
+  i `INPUT`). Wypisuje `OK` lub listę błędów: **pierwszy** błąd składni z każdego pliku
+  (parser nie kontynuuje po błędzie, aby nie zgłaszać błędów pochodnych) oraz
+  wszystkie błędy walidacji nazw z plików poprawnych składniowo.
 - `falasz --version` → `falasz 0.1.0a0`.
 
 ## 12. Rejestr decyzji
@@ -499,6 +501,8 @@ surowy traceback Pythona (chyba że `--debug`).
 | N4 | Składnia importu (P11) | `IMPORT [LOCAL] name [AS alias]`; nowe słowa kluczowe `LOCAL`, `AS` |
 | N5 | Składnia eksportu (P12) | instrukcja `EXPORT a, b` na najwyższym poziomie, w dowolnym miejscu pliku; wiązanie na żywo, tylko do odczytu |
 | N6 | `INPUT` (P16) | `INPUT([prompt])` → STRING bez końca linii; EOF → `NULL`; zawsze UTF-8 |
+| N7 | `falasz check` (11.4) | jeden (pierwszy) błąd składni na plik; wszystkie błędy walidacji nazw |
+| N8 | Limit zagnieżdżenia (10) | każde `ELSE IF` liczy się jako poziom zagnieżdżenia — łańcuch dłuższy niż ~200 gałęzi → `SyntaxError` |
 
 ## 13. Przykłady
 

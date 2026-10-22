@@ -88,3 +88,31 @@ def test_sources_are_utf8_without_crlf(src):
 def test_module_files_have_no_expectation_files(src):
     # Only main.falasz is an entry point inside a multi-file example.
     assert not src.with_suffix(".out").exists() and not src.with_suffix(".err").exists()
+
+
+# ------------------------------------------------- stage 2: parser vs. corpus
+
+from falasz.errors import FalaszSyntaxError  # noqa: E402
+from falasz.parser import parse  # noqa: E402
+
+SYNTAX_INVALID = [p for p in INVALID if parse_err(p)[3] == "SyntaxError"]
+
+
+def _parse_file(path):
+    return parse(path.read_text(encoding="utf-8"), path.name)
+
+
+@pytest.mark.parametrize("src", SYNTAX_INVALID, ids=example_id)
+def test_parser_reports_expected_syntax_error(src):
+    path, line, col, _ = parse_err(src)
+    with pytest.raises(FalaszSyntaxError) as exc:
+        _parse_file(path)
+    assert (exc.value.path, exc.value.pos) == (path.name, (line, col)), exc.value.format()
+
+
+@pytest.mark.parametrize(
+    "src", [p for p in ALL_SOURCES if not any(p == parse_err(s)[0] for s in SYNTAX_INVALID)],
+    ids=lambda p: str(p.relative_to(EXAMPLES)),
+)
+def test_other_examples_parse(src):
+    _parse_file(src)
