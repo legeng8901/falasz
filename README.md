@@ -1,5 +1,7 @@
 # Falasz
 
+[![CI](https://github.com/legeng8901/falasz/actions/workflows/ci.yml/badge.svg)](https://github.com/legeng8901/falasz/actions/workflows/ci.yml)
+
 Falasz is a small general-purpose programming language with English keywords,
 explicit blocks and strict typing. This repository contains the reference
 interpreter, written in Python 3.12+.
@@ -43,11 +45,14 @@ The recommended way is [pipx](https://pipx.pypa.io/), which puts the `falasz`
 command on your `PATH`:
 
 ```console
-pipx install ./falasz              # a source checkout (Windows: .\falasz)
-pipx install falasz-0.1.0a0-py3-none-any.whl
+git clone https://github.com/legeng8901/falasz.git
+pipx install ./falasz              # Windows: pipx install .\falasz
+falasz --version
 ```
 
-Into a virtual environment, from a source checkout:
+A built wheel installs the same way: `pipx install falasz-0.1.0a0-py3-none-any.whl`.
+
+Into a virtual environment, inside the cloned `falasz` directory:
 
 ```console
 python -m venv .venv
@@ -115,8 +120,8 @@ The full, normative description is in [docs/spec.md](docs/spec.md) (in Polish).
 
 More programs are in [examples/](examples/): FizzBuzz, primes, statistics and a
 grade report from standard input, a Caesar cipher, a temperature converter,
-recursion, closures, a multi-file notes app, a monthly budget from a CSV file,
-and a thermostat and a weather station driven by mock sensors.
+an inventory report, recursion, closures, a multi-file notes app, a monthly
+budget from a CSV file, and a thermostat and a weather station driven by mock sensors.
 
 ## Safety notes
 

@@ -43,7 +43,7 @@ First alpha of the language and its reference interpreter.
   ([docs/getting-started.md](docs/getting-started.md)); installation with pipx
   so that `falasz` is on `PATH`.
 - New examples: Caesar cipher, grade report from standard input, temperature
-  converter, monthly budget from a CSV file (modules + files).
+  converter, monthly budget from a CSV file (modules + files), inventory report.
 - The code in README and the guide is run by the test suite.
 
 ### Fixed before release

@@ -1,0 +1,35 @@
+==========================================================
+          SYSTEM RAPORTOWANIA MAGAZYNOWEGO v0.1           
+==========================================================
+Produkt        |    Ilosc | Cena jedn. | Wartosc calk.
+---------------+----------+------------+--------------
+Laptop Pro     |        5 |     4200.0 |      21000.0
+Myszka USB     |       42 |       65.0 |       2730.0
+Klawiatura     |       18 |      140.0 |       2520.0
+Monitor 4K     |        3 |     1650.0 |       4950.0
+Fotel Biurowy  |        7 |      850.0 |       5950.0
+Biurko Stojace |        2 |     1299.0 |       2598.0
+Notes A5       |      120 |       12.5 |       1500.0
+Dlugopis Gel   |      300 |        3.0 |        900.0
+----------------------------------------------------------
+Liczba unikalnych pozycji w bazie: 8
+Calkowita liczba produktow w magazynie: 497
+Laczna wartosc magazynu: 42148.0 PLN
+Srednia wartosc jednostkowa produktu: 84.80482897384306 PLN
+Najbardziej wartosciowa pozycja: Laptop Pro (21000.0 PLN)
+
+--- PODSUMOWANIE KATEGORII PRODUKTOWYCH ---
+Kategoria: IT -> Pozycji: 4
+Kategoria: Meble -> Pozycji: 2
+Kategoria: Biurowe -> Pozycji: 2
+
+--- ALERTY MAGAZYNOWE (Niski stan < 5 szt.) ---
+[UWAGA] Wymagane zamowienie dla: Monitor 4K
+[UWAGA] Wymagane zamowienie dla: Biurko Stojace
+
+--- SYMULACJA RABATU PRZY ZAKUPIE CALOSCI ---
+Czy klient posiada status VIP: TRUE
+Wartosc bazowa zamowienia: 42148.0 PLN
+Udzielony rabat: 6322.2 PLN
+Wartosc po rabacie: 35825.8 PLN
+==========================================================

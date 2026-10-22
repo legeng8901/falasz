@@ -1,0 +1,149 @@
+# inventory_report.falasz
+# System analizy sprzedaży i stanu magazynowego
+
+FUNC format_row(name, qty, unit_price, total_val)
+    LET col1 = name
+    WHILE LEN(col1) < 14
+        col1 = col1 + " "
+    END
+    LET col2 = STR(qty)
+    WHILE LEN(col2) < 8
+        col2 = " " + col2
+    END
+    LET col3 = STR(unit_price)
+    WHILE LEN(col3) < 10
+        col3 = " " + col3
+    END
+    LET col4 = STR(total_val)
+    WHILE LEN(col4) < 12
+        col4 = " " + col4
+    END
+    RETURN col1 + " | " + col2 + " | " + col3 + " | " + col4
+END
+
+FUNC compute_item_total(item)
+    RETURN item["qty"] * item["price"]
+END
+
+FUNC filter_low_stock(items, threshold)
+    LET alerts = []
+    FOR item IN items
+        IF item["qty"] < threshold
+            alerts = alerts + [item["name"]]
+        END
+    END
+    RETURN alerts
+END
+
+FUNC count_by_category(items)
+    LET counts = {}
+    LET cat = ""
+    FOR item IN items
+        cat = item["category"]
+        LET found = FALSE
+        FOR existing_key IN counts
+            IF existing_key == cat
+                found = TRUE
+            END
+        END
+        IF found
+            counts[cat] = counts[cat] + 1
+        ELSE
+            counts[cat] = 1
+        END
+    END
+    RETURN counts
+END
+
+FUNC calculate_discount(total_val, is_vip)
+    LET disc = 0.0
+    IF is_vip AND (total_val >= 1000.0)
+        disc = total_val * 0.15
+    ELSE IF total_val >= 1000.0
+        disc = total_val * 0.08
+    ELSE IF is_vip
+        disc = total_val * 0.05
+    ELSE
+        disc = 0.0
+    END
+    RETURN disc
+END
+
+FUNC generate_report()
+    SAY "=========================================================="
+    SAY "          SYSTEM RAPORTOWANIA MAGAZYNOWEGO v0.1           "
+    SAY "=========================================================="
+    
+    LET inventory = [
+        {"name": "Laptop Pro", "qty": 5, "price": 4200.0, "category": "IT"},
+        {"name": "Myszka USB", "qty": 42, "price": 65.0, "category": "IT"},
+        {"name": "Klawiatura", "qty": 18, "price": 140.0, "category": "IT"},
+        {"name": "Monitor 4K", "qty": 3, "price": 1650.0, "category": "IT"},
+        {"name": "Fotel Biurowy", "qty": 7, "price": 850.0, "category": "Meble"},
+        {"name": "Biurko Stojace", "qty": 2, "price": 1299.0, "category": "Meble"},
+        {"name": "Notes A5", "qty": 120, "price": 12.5, "category": "Biurowe"},
+        {"name": "Dlugopis Gel", "qty": 300, "price": 3.0, "category": "Biurowe"}
+    ]
+
+    SAY "Produkt        |    Ilosc | Cena jedn. | Wartosc calk."
+    SAY "---------------+----------+------------+--------------"
+
+    LET grand_total = 0.0
+    LET total_units = 0
+    LET max_val = 0.0
+    LET most_valuable = ""
+
+    FOR it IN inventory
+        LET val = compute_item_total(it)
+        grand_total = grand_total + val
+        total_units = total_units + it["qty"]
+        
+        IF val > max_val
+            max_val = val
+            most_valuable = it["name"]
+        END
+        
+        SAY format_row(it["name"], it["qty"], it["price"], val)
+    END
+
+    SAY "----------------------------------------------------------"
+    SAY "Liczba unikalnych pozycji w bazie: " + STR(LEN(inventory))
+    SAY "Calkowita liczba produktow w magazynie: " + STR(total_units)
+    SAY "Laczna wartosc magazynu: " + STR(grand_total) + " PLN"
+    
+    LET avg_price_per_unit = grand_total / total_units
+    SAY "Srednia wartosc jednostkowa produktu: " + STR(avg_price_per_unit) + " PLN"
+    SAY "Najbardziej wartosciowa pozycja: " + most_valuable + " (" + STR(max_val) + " PLN)"
+    
+    SAY ""
+    SAY "--- PODSUMOWANIE KATEGORII PRODUKTOWYCH ---"
+    LET cat_stats = count_by_category(inventory)
+    FOR k IN cat_stats
+        SAY "Kategoria: " + k + " -> Pozycji: " + STR(cat_stats[k])
+    END
+
+    SAY ""
+    SAY "--- ALERTY MAGAZYNOWE (Niski stan < 5 szt.) ---"
+    LET low_stock = filter_low_stock(inventory, 5)
+    IF LEN(low_stock) == 0
+        SAY "Wszystkie stany magazynowe w normie."
+    ELSE
+        FOR alert_item IN low_stock
+            SAY "[UWAGA] Wymagane zamowienie dla: " + alert_item
+        END
+    END
+
+    SAY ""
+    SAY "--- SYMULACJA RABATU PRZY ZAKUPIE CALOSCI ---"
+    LET client_vip = TRUE
+    LET discount = calculate_discount(grand_total, client_vip)
+    LET final_price = grand_total - discount
+    
+    SAY "Czy klient posiada status VIP: " + STR(client_vip)
+    SAY "Wartosc bazowa zamowienia: " + STR(grand_total) + " PLN"
+    SAY "Udzielony rabat: " + STR(discount) + " PLN"
+    SAY "Wartosc po rabacie: " + STR(final_price) + " PLN"
+    SAY "=========================================================="
+END
+
+generate_report()
