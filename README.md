@@ -75,14 +75,14 @@ Diagnostics, warnings and tracebacks go to stderr.
 | 70 | internal interpreter error (a bug, please report it) |
 | 130 | interrupted with Ctrl+C |
 
-Errors always name the file, line and column:
+Errors always name the file, line and column (`falasz run error_trace.falasz`, run in `examples/`):
 
 ```text
 Traceback:
-  main.falasz:15:7 in <main>
-  main.falasz:11:34 in report
-  main.falasz:7:18 in average
-main.falasz:7:18: ZeroDivisionError: division by zero
+  error_trace.falasz:15:7 in <main>
+  error_trace.falasz:11:34 in report
+  error_trace.falasz:7:18 in average
+error_trace.falasz:7:18: ZeroDivisionError: division by zero
 ```
 
 ## The language in one page
@@ -100,7 +100,8 @@ The full, normative description is in [docs/spec.md](docs/spec.md) (in Polish).
   `BREAK`, `CONTINUE`.
 * **Functions:** `FUNC name(a, b) … RETURN value … END`; closures, recursion
   (up to 500 active calls), functions as values.
-* **Builtins:** `SAY`, `INPUT([prompt])`, `RANGE`, `STR`, `INT`, `FLOAT`, `LEN`.
+* **Output and builtins:** the `SAY value` statement; builtin functions `INPUT([prompt])`,
+  `RANGE`, `STR`, `INT`, `FLOAT`, `LEN`.
 * **Modules:** a file exports names with `EXPORT a, b`; another file uses
   `IMPORT LOCAL name` (or `IMPORT name`), then `name.a`. Local modules live next to
   the importing file; import cycles are reported before the program runs.
@@ -143,4 +144,5 @@ python -m venv .venv
 
 ## License
 
-No license has been chosen yet. Until the owner decides, all rights are reserved.
+Falasz is released under the [MIT License](LICENSE).
+Copyright (c) 2026 Daniel Falasz.

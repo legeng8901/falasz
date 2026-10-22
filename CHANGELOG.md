@@ -36,6 +36,7 @@ First alpha of the language and its reference interpreter.
   modules reported at once; warnings for shadowed standard modules.
 - Python package with the `falasz` console script and `python -m falasz`.
 - GitHub Actions workflow for Linux and Windows (prepared, not yet run).
+- Released under the MIT License; author metadata in the package.
 
 ### Known limitations
 - See [docs/limitations.md](docs/limitations.md). Planned after v0.1:

@@ -14,6 +14,7 @@ jobs:
   test:
     name: tests (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +45,7 @@ jobs:
     name: package install (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: test
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -63,15 +65,20 @@ jobs:
       - name: Install the wheel into a clean virtual environment
         shell: bash
         run: |
+          # Git Bash on Windows: use a POSIX-style path for RUNNER_TEMP.
+          TEMP_DIR="$RUNNER_TEMP"
+          if command -v cygpath > /dev/null; then TEMP_DIR="$(cygpath -u "$RUNNER_TEMP")"; fi
           python -m venv "$RUNNER_TEMP/clean"
-          if [ -d "$RUNNER_TEMP/clean/Scripts" ]; then BIN="$RUNNER_TEMP/clean/Scripts"; else BIN="$RUNNER_TEMP/clean/bin"; fi
+          if [ -d "$TEMP_DIR/clean/Scripts" ]; then BIN="$TEMP_DIR/clean/Scripts"; else BIN="$TEMP_DIR/clean/bin"; fi
           "$BIN/python" -m pip install dist/*.whl
+          "$BIN/python" -c "from importlib.metadata import metadata as m; assert m('falasz')['License-Expression'] == 'MIT'"
+          echo "TEMP_DIR=$TEMP_DIR" >> "$GITHUB_ENV"
           echo "BIN=$BIN" >> "$GITHUB_ENV"
 
       - name: Smoke-test the installed command outside the source tree
         shell: bash
         run: |
-          cd "$RUNNER_TEMP"
+          cd "$TEMP_DIR"
           test "$("$BIN/falasz" --version)" = "falasz 0.1.0a0"
           cp -r "$GITHUB_WORKSPACE/examples" ex
           cd ex

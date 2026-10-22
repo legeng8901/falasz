@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,9 @@ name = "falasz"
 dynamic = ["version"]
 description = "Falasz programming language - reference interpreter (alpha)"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Daniel Falasz" }]
 requires-python = ">=3.12"
 keywords = ["programming language", "interpreter", "education"]
 classifiers = [
@@ -20,7 +23,6 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Interpreters",
 ]
-# No license or author metadata yet: the owner decides before publication.
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "build>=1"]
