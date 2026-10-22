@@ -1,0 +1,49 @@
+# Functions as values: closures, higher-order functions, functions in maps.
+FUNC make_account(balance)
+    FUNC deposit(amount)
+        balance = balance + amount
+        RETURN balance
+    END
+    FUNC withdraw(amount)
+        IF amount > balance
+            RETURN "insufficient funds"
+        END
+        balance = balance - amount
+        RETURN balance
+    END
+    RETURN {"deposit": deposit, "withdraw": withdraw}
+END
+
+LET ala = make_account(100)
+LET ola = make_account(10)
+SAY ala["deposit"](50)
+SAY ala["withdraw"](30)
+SAY ola["withdraw"](30)
+SAY ola["deposit"](5)
+
+FUNC map(f, xs)
+    LET out = []
+    FOR x IN xs
+        out = out + [f(x)]
+    END
+    RETURN out
+END
+
+FUNC compose(f, g)
+    FUNC both(x)
+        RETURN f(g(x))
+    END
+    RETURN both
+END
+
+FUNC double(x)
+    RETURN x * 2
+END
+
+FUNC inc(x)
+    RETURN x + 1
+END
+
+SAY map(compose(double, inc), RANGE(0, 5))
+SAY map(compose(STR, double), [1.5, 2])
+SAY map(LEN, ["", "ab", "żółw"])

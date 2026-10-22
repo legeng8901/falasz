@@ -1,0 +1,15 @@
+# Demonstrates the call-stack trace printed for runtime errors in functions.
+FUNC average(xs)
+    LET total = 0
+    FOR x IN xs
+        total = total + x
+    END
+    RETURN total / LEN(xs)
+END
+
+FUNC report(name, xs)
+    SAY name + ": " + STR(average(xs))
+END
+
+report("scores", [3, 4, 5])
+report("empty", [])

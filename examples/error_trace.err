@@ -1,0 +1,5 @@
+Traceback:
+  error_trace.falasz:15:7 in <main>
+  error_trace.falasz:11:34 in report
+  error_trace.falasz:7:18 in average
+error_trace.falasz:7:18: ZeroDivisionError: division by zero

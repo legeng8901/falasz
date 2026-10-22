@@ -270,7 +270,6 @@ def test_static_errors_prevent_execution():
 
 
 def test_not_yet_implemented_features_are_reported():
-    assert error("FUNC f()\nEND\n")[0] == "NotImplementedError"
     assert error("IMPORT files\n")[0] == "NotImplementedError"
 
 

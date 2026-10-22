@@ -2,7 +2,8 @@
 
 Falasz values map onto Python objects:
     INTEGER -> int      FLOAT -> float     STRING -> str     BOOLEAN -> bool
-    NULL -> None        LIST -> list       MAP -> FMap       FUNCTION -> Builtin
+    NULL -> None        LIST -> list       MAP -> FMap
+    FUNCTION -> Builtin (implemented in Python) or Function (FUNC in Falasz)
 Python's bool is a subclass of int, so type checks always use `type(v) is ...`.
 
 Operations raise Falasz errors without a location; the interpreter attaches the
@@ -72,6 +73,19 @@ class Builtin:
         self.fn = fn
 
 
+class Function:
+    """A user function: FUNC statement + the scope it was executed in (closure)."""
+
+    __slots__ = ("name", "params", "body", "closure", "path")
+
+    def __init__(self, name: str, params: list[str], body: list, closure: Any, path: str):
+        self.name = name
+        self.params = params
+        self.body = body
+        self.closure = closure
+        self.path = path
+
+
 # --------------------------------------------------------------------- types
 
 
@@ -91,7 +105,7 @@ def type_name(v: Any) -> str:
         return "LIST"
     if t is FMap:
         return "MAP"
-    if t is Builtin:
+    if t is Builtin or t is Function:
         return "FUNCTION"
     raise AssertionError(f"not a Falasz value: {v!r}")
 
@@ -149,6 +163,8 @@ def _repr(v: Any, out: list[str], active: set[int], depth: int) -> None:
         out.append("NULL")
     elif t is Builtin:
         out.append(f"<builtin {v.name}>")
+    elif t is Function:
+        out.append(f"<func {v.name}>")
     elif t is list or t is FMap:
         if id(v) in active:
             out.append("[...]" if t is list else "{...}")
@@ -213,7 +229,7 @@ def _equals(a: Any, b: Any, assumed: set[tuple[int, int]], depth: int) -> bool:
         if a.data.keys() != b.data.keys():
             return False
         return all(_equals(a.data[k], b.data[k], assumed, depth + 1) for k in a.data)
-    if ta is Builtin:
+    if ta is Builtin or ta is Function:
         return a is b
     return a == b
 

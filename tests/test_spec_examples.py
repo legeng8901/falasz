@@ -124,7 +124,7 @@ import io  # noqa: E402
 
 from falasz.runtime import StaticErrors, run_source  # noqa: E402
 
-CURRENT_STAGE = 3
+CURRENT_STAGE = 4
 # Examples needing features of a later stage; everything else must pass now.
 REQUIRES_STAGE = {
     "hello": 4, "scopes": 4, "arity": 4, "no_leak_to_outer": 4,

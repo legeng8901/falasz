@@ -441,6 +441,9 @@ Traceback:
 lib.falasz:3:12: ZeroDivisionError: division by zero
 ```
 
+Kolejne identyczne linie śladu (głęboka rekurencja) są zwijane do jednej linii
+i dopisku `[previous line repeated N more times]`.
+
 Komunikaty diagnostyczne są w języku angielskim (P14). Ostrzeżenia mają postać
 `<ścieżka>:<linia>:<kolumna>: Warning: <komunikat>` i nie zmieniają kodu wyjścia.
 
@@ -539,11 +542,19 @@ dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
 | E8 | Równość MAP | niezależna od kolejności wstawiania (`{"a": 1, "b": 2} == {"b": 2, "a": 1}` → `TRUE`) |
 | E9 | Klucz MAP złego typu w literale | `TypeError` wskazuje początek wyrażenia klucza |
 
+### 12.4 Ustalone w Etapie 4 — zatwierdzone 2026-10-22
+
+| # | Temat | Propozycja |
+|---|---|---|
+| E10 | Kolejność przy wywołaniu | najpierw funkcja, potem argumenty od lewej do prawej, dopiero potem sprawdzenie, czy wartość jest funkcją, i liczby argumentów (`f(INPUT())` przy złej liczbie argumentów i tak czyta wejście) |
+| E11 | Limit głębokości | 500 jednocześnie aktywnych wywołań funkcji użytkownika (funkcje wbudowane się nie liczą); błąd wskazuje `(` wywołania, które przekroczyło limit |
+
 ## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
 
 Zgłoszone przez właściciela do realizacji **po** ukończeniu v0.1 — nie implementować wcześniej:
 - `HAS(map, key)` → BOOLEAN — sprawdzenie obecności klucza w MAP;
-- `APPEND(list, value)` — dopisanie elementu do LIST w miejscu.
+- `APPEND(list, value)` — dopisanie elementu do LIST w miejscu;
+- `TYPE(value)` → STRING — nazwa typu wartości (`"INTEGER"`, `"LIST"`, …).
 
 Kandydaci (bez decyzji): funkcje tekstowe (podział, wielkość liter, wycinki),
 `TRY/CATCH`, lambdy, interpolacja tekstu, notacja wykładnicza, kompilator.

@@ -43,7 +43,8 @@ def test_random_programs_fail_cleanly(seed):
 
 
 ATOMS = ["0", "1", "-3", "2.5", "0.0", '"a"', '""', "TRUE", "FALSE", "NULL", "[]", '[1, "a"]',
-         '{"k": 1}', "{}", "x", "y", "LEN", 'RANGE(0, 3)', 'INT("5")', "INPUT()", "9" * 25]
+         '{"k": 1}', "{}", "x", "y", "LEN", 'RANGE(0, 3)', 'INT("5")', "INPUT()", "9" * 25,
+         "h", "h(x)", "r(3)", "r(y)", "make()", "make()(1)"]
 BINARY_OPS = ["+", "-", "*", "/", "%", "==", "!=", "<", ">=", "AND", "OR"]
 
 
@@ -73,7 +74,29 @@ def random_statement(rng):
         lambda: f"IF {e()}\n SAY 1\nELSE\n SAY 2\nEND",
         lambda: f"FOR z IN {e()}\n SAY z\nEND",
         lambda: f"WHILE {e()}\n BREAK\nEND",
+        lambda: f"SAY h({e()})",
+        lambda: f"SAY r({e()})",
+        lambda: f"SAY {e()}({e()})",
     ])()
+
+
+FUNCTIONS = """FUNC h(p)
+    RETURN p
+END
+FUNC r(n)
+    IF n <= 0
+        RETURN [n]
+    END
+    RETURN r(n - 1) + [n]
+END
+FUNC make()
+    FUNC inner(v)
+        x = v
+        RETURN x
+    END
+    RETURN inner
+END
+"""
 
 
 @pytest.mark.parametrize("seed", range(40))
@@ -81,7 +104,7 @@ def test_random_well_formed_programs_fail_cleanly(seed):
     rng = random.Random(1000 + seed)
     for _ in range(50):
         body = "\n".join(random_statement(rng) for _ in range(rng.randint(1, 6)))
-        src = 'LET x = [1, 2]\nLET y = {"k": [0]}\n' + body + "\n"
+        src = 'LET x = [1, 2]\nLET y = {"k": [0]}\n' + FUNCTIONS + body + "\n"
         try:
             run_source(src, "fuzz.falasz", out=io.StringIO(), inp=io.BytesIO(b"7\n"), max_steps=5000)
         except (FalaszError, StaticErrors) as err:

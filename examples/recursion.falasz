@@ -1,0 +1,44 @@
+# Recursion: factorial, Fibonacci, Towers of Hanoi, mutual recursion.
+FUNC fact(n)
+    IF n <= 1
+        RETURN 1
+    END
+    RETURN n * fact(n - 1)
+END
+
+FUNC fib(n)
+    IF n < 2
+        RETURN n
+    END
+    RETURN fib(n - 1) + fib(n - 2)
+END
+
+FUNC hanoi(n, from, to, via)
+    IF n == 0
+        RETURN 0
+    END
+    LET moves = hanoi(n - 1, from, via, to)
+    IF n == 3
+        SAY "move disk 3 from " + from + " to " + to
+    END
+    RETURN moves + 1 + hanoi(n - 1, via, to, from)
+END
+
+FUNC is_even(n)
+    IF n == 0
+        RETURN TRUE
+    END
+    RETURN is_odd(n - 1)
+END
+
+FUNC is_odd(n)
+    IF n == 0
+        RETURN FALSE
+    END
+    RETURN is_even(n - 1)
+END
+
+SAY "20! = " + STR(fact(20))
+SAY "fib(20) = " + STR(fib(20))
+SAY "hanoi(3) moves: " + STR(hanoi(3, "A", "C", "B"))
+SAY "is_even(42): " + STR(is_even(42))

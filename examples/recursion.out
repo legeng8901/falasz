@@ -1,0 +1,5 @@
+20! = 2432902008176640000
+fib(20) = 6765
+move disk 3 from A to C
+hanoi(3) moves: 7
+is_even(42): TRUE

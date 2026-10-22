@@ -1,8 +1,8 @@
 """Tree-walking interpreter (docs/spec.md, sections 5-8).
 
-Stage 3 scope: literals, variables, expressions, SAY, IF/WHILE/FOR, BREAK/CONTINUE
-and builtin functions. User functions (stage 4) and modules (stage 5) are
-reported as FalaszNotImplementedError.
+Implemented: literals, variables, expressions, SAY, IF/WHILE/FOR, BREAK/CONTINUE,
+builtin and user functions (closures, recursion with a depth limit, call-stack
+traces). Modules (stage 5) are reported as FalaszNotImplementedError.
 
 The program must have been validated first: `Name.hops` tells which scope a
 name lives in, so a variable whose declaration was not executed is reported as
@@ -24,10 +24,14 @@ from .errors import (
     FalaszKeyError,
     FalaszLimitError,
     FalaszNameError,
+    FalaszRecursionLimitError,
     FalaszTypeError,
     FalaszValueError,
     Pos,
+    TraceEntry,
 )
+
+MAX_CALL_DEPTH = 500
 
 FalaszNotImplementedError = type(
     "FalaszNotImplementedError", (FalaszError,), {"category": "NotImplementedError"}
@@ -50,6 +54,23 @@ class _Continue(Exception):
     pass
 
 
+class _Return(Exception):
+    __slots__ = ("value",)
+
+    def __init__(self, value: Any):
+        self.value = value
+
+
+class Frame:
+    """One active call: frame name ("<main>" or the function name) and its file."""
+
+    __slots__ = ("name", "path")
+
+    def __init__(self, name: str, path: str):
+        self.name = name
+        self.path = path
+
+
 class Interpreter:
     def __init__(
         self,
@@ -57,12 +78,15 @@ class Interpreter:
         out: TextIO | None = None,
         inp: BinaryIO | None = None,
         max_steps: int | None = None,
+        max_depth: int = MAX_CALL_DEPTH,
     ):
         self.path = path
         self.out = out if out is not None else sys.stdout
         self.inp = inp
         self.max_steps = max_steps
+        self.max_depth = max_depth
         self.steps = 0
+        self.frames = [Frame("<main>", path)]
 
     # ------------------------------------------------------------ helpers
 
@@ -166,8 +190,10 @@ class Interpreter:
                 self.evaluate(expr, scope)
             case n.Export():
                 pass  # checked statically; exports are read by importers (stage 5)
-            case n.Func():
-                raise self.error(FalaszNotImplementedError, "FUNC is not implemented yet (stage 4)", stmt.pos)
+            case n.Func(name=name, params=params, body=body):
+                scope.vars[name] = v.Function(name, [p for p, _ in params], body, scope, self.path)
+            case n.Return(value=value):
+                raise _Return(None if value is None else self.evaluate(value, scope))
             case n.Import():
                 raise self.error(FalaszNotImplementedError, "IMPORT is not implemented yet (stage 5)", stmt.pos)
             case _:
@@ -261,7 +287,11 @@ class Interpreter:
             raise self.located(err, pos)
 
     def call(self, fn: Any, args: list[Any], pos: Pos) -> Any:
-        if type(fn) is not v.Builtin:
+        """Call `fn` with already evaluated arguments; `pos` is the call's '('."""
+        t = type(fn)
+        if t is v.Function:
+            return self.call_function(fn, args, pos)
+        if t is not v.Builtin:
             raise self.error(FalaszTypeError, f"{v.type_name(fn)} is not callable", pos)
         if not fn.min_args <= len(args) <= fn.max_args:
             expected = (str(fn.min_args) if fn.min_args == fn.max_args
@@ -269,6 +299,36 @@ class Interpreter:
             raise self.error(FalaszArityError,
                              f"{fn.name} expects {expected} argument(s), got {len(args)}", pos)
         return self.wrap(lambda: fn.fn(self, args), pos)
+
+    def call_function(self, fn: v.Function, args: list[Any], pos: Pos) -> Any:
+        if len(args) != len(fn.params):
+            raise self.error(FalaszArityError,
+                             f"{fn.name} expects {len(fn.params)} argument(s), got {len(args)}", pos)
+        if len(self.frames) > self.max_depth:  # frames[0] is <main>
+            raise self.error(FalaszRecursionLimitError,
+                             f"maximum call depth of {self.max_depth} exceeded", pos)
+        scope = Scope(fn.closure)
+        scope.vars.update(zip(fn.params, args))
+        caller = self.frames[-1]
+        self.frames.append(Frame(fn.name, fn.path))
+        try:
+            self.block(fn.body, scope)
+        except _Return as ret:
+            return ret.value
+        except RecursionError:
+            # The Python stack ran out before max_depth (very deep expressions in
+            # every frame); report it as a Falasz error, never a Python crash.
+            err = self.error(FalaszRecursionLimitError, "call stack exhausted", pos)
+            err.trace = [TraceEntry(caller.path, pos, caller.name)]
+            raise err from None
+        except FalaszError as err:
+            if not err.trace:  # innermost frame: where the error happened
+                err.trace.append(TraceEntry(err.path, err.pos, fn.name))
+            err.trace.insert(0, TraceEntry(caller.path, pos, caller.name))
+            raise
+        finally:
+            self.frames.pop()
+        return None
 
     # ----------------------------------------------------------- indexing
 
