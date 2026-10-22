@@ -8,6 +8,7 @@ from typing import BinaryIO, TextIO
 from .errors import FalaszError
 from .interpreter import Interpreter
 from .modules import LoaderWarning, ModuleLoader
+from .sensors import SensorProvider
 
 
 class StaticErrors(Exception):
@@ -47,8 +48,13 @@ def run_source(
     out: TextIO | None = None,
     inp: BinaryIO | None = None,
     max_steps: int | None = None,
+    sensors: SensorProvider | None = None,
 ) -> CheckResult:
-    """Check the whole program, then run it; raises StaticErrors or FalaszError."""
+    """Check the whole program, then run it; raises StaticErrors or FalaszError.
+
+    `sensors` is the provider for the `sensors` module (default: no sensors).
+    Providers are stateful, so pass a fresh one for every run.
+    """
     result = check_source(source, path)
     if result.errors:
         raise StaticErrors(result.errors)
@@ -57,7 +63,7 @@ def run_source(
     assert main.program is not None
     interpreter = Interpreter(
         main.display, out=out, inp=inp, max_steps=max_steps,
-        modules=loader.programs(), base_dir=loader.base_dir,
+        modules=loader.programs(), base_dir=loader.base_dir, sensors=sensors,
     )
     interpreter.run(main.program)
     return result

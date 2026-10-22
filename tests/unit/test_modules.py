@@ -389,10 +389,9 @@ def test_local_name_shadowing_import_is_not_member_checked(tmp_path):
         assert check_file("main.falasz").errors == []
 
 
-def test_sensors_module_is_stage_6(tmp_path):
+def test_sensors_module_without_provider_has_no_sensors(tmp_path):
     write(tmp_path, **{"main.falasz": "IMPORT sensors\nSAY sensors.available()\n"})
-    err, _ = fail(tmp_path)
-    assert err.category == "NotImplementedError"
+    assert run(tmp_path) == "[]\n"
 
 
 def test_check_does_not_execute_modules(tmp_path, capsys):

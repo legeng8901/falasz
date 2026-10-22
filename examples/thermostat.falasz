@@ -1,0 +1,26 @@
+# Thermostat simulation driven by mock sensors (see thermostat.sensors.json).
+IMPORT sensors
+
+LET target = 21.0
+LET margin = 0.5
+LET heating = FALSE
+
+SAY "room: " + sensors.read("location") + ", target " + STR(target)
+FOR minute IN RANGE(0, sensors.read("samples"))
+    LET t = sensors.read("temperature")
+    IF sensors.read("window_open")
+        heating = FALSE
+        SAY STR(minute) + ": " + STR(t) + " window open -> heating OFF"
+        CONTINUE
+    END
+    IF t < target - margin
+        heating = TRUE
+    ELSE IF t > target + margin
+        heating = FALSE
+    END
+    LET state = "OFF"
+    IF heating
+        state = "ON"
+    END
+    SAY STR(minute) + ": " + STR(t) + " heating " + state
+END

@@ -1,7 +1,8 @@
 """Programs in examples/ must run and produce the recorded output.
 
 examples/<name>.falasz or examples/<name>/main.falasz (multi-file), with
-<name>.out = expected stdout, <name>.in = stdin, <name>.err = expected error with
+<name>.out = expected stdout, <name>.in = stdin, <name>.sensors.json = mock sensor
+data, <name>.err = expected error with
 traceback (only for examples that intentionally fail). Each example runs on a
 copy in a temporary directory, so examples that write files leave no trace.
 """
@@ -15,6 +16,7 @@ import pytest
 
 from falasz.errors import FalaszError
 from falasz.runtime import run_file
+from falasz.sensors import MockSensorProvider
 
 ROOT = Path(__file__).parent.parent / "examples"
 EXAMPLES = sorted(
@@ -38,12 +40,15 @@ def test_example(src, tmp_path):
     else:
         workdir = tmp_path
         shutil.copy(src, workdir)
+    mock = src.with_suffix(".sensors.json")
+    sensors = MockSensorProvider.from_json_file(str(mock)) if mock.exists() else None
     stdin = src.with_suffix(".in")
     expected_err = src.with_suffix(".err")
     out = io.StringIO()
     try:
         with contextlib.chdir(workdir):
-            run_file(src.name, out=out, inp=io.BytesIO(stdin.read_bytes()) if stdin.exists() else None)
+            run_file(src.name, out=out, inp=io.BytesIO(stdin.read_bytes()) if stdin.exists() else None,
+                     sensors=sensors)
     except FalaszError as err:
         assert expected_err.exists(), err.format_with_trace()
         assert err.format_with_trace() + "\n" == expected_err.read_text(encoding="utf-8")

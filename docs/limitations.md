@@ -1,13 +1,12 @@
 # Falasz — current limitations
 
-State after **stage 5** (modules and files). Updated at every stage.
+State after **stage 6** (sensors with a mock provider). Updated at every stage.
 
 ## Not implemented yet (planned for v0.1)
 
 | Feature | Stage | Current behaviour |
 |---|---|---|
-| `sensors` (mock provider) | 6 | `IMPORT sensors` works; calling its functions raises `NotImplementedError` (temporary category) |
-| `falasz` command (`run`, `check`, `--version`), exit codes, `--max-steps`, `--sensors-mock`, warnings | 7 | only the Python API exists: `falasz.runtime.run_source` / `check_source` |
+| `falasz` command (`run`, `check`, `--version`), exit codes, `--max-steps`, `--sensors-mock`, warnings | 7 | only the Python API exists: `falasz.runtime.run_file` / `check_file`; mock sensors via `sensors=MockSensorProvider...` |
 | Windows verification (CI) | 7 | tested only on Linux (Fedora, Python 3.14) |
 
 ## Outside v0.1 (decided)
@@ -27,6 +26,14 @@ Planned after v0.1 (spec section 13): `HAS(map, key)`, `APPEND(list, value)`, `T
 - No string functions (split, upper, slicing) besides indexing and `LEN`.
 - No way to ask for the type of a value (no `TYPE()`); code that handles mixed
   values has to inspect `STR(x)`.
+
+## Sensors
+
+- No real hardware: only the `null` (default) and `mock` providers exist; see
+  [sensors.md](sensors.md).
+- A program cannot ask whether a sequence sensor has readings left; reading past
+  the end is a `SensorError`, so programs need a known count.
+- Readings have no timestamps or units.
 
 ## Implementation limits
 

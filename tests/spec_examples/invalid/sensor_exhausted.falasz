@@ -1,0 +1,3 @@
+IMPORT sensors
+SAY sensors.read("seq")
+SAY sensors.read("seq")

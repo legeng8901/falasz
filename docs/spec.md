@@ -396,17 +396,36 @@ Eksportuje: `read_text`, `write_text`.
 - `files` **nie jest piaskownicą** — ma uprawnienia procesu.
 
 ### 9.4 `sensors`
-Eksportuje: `available`, `read`.
-- `sensors.available()` → LIST STRING (posortowane nazwy).
-- `sensors.read(name)` → INTEGER, FLOAT, BOOLEAN lub STRING (zależnie od czujnika);
-  nieznana nazwa → `SensorError`.
-- Dostawca (provider) jest wstrzykiwany do interpretera:
-  - domyślnie `null` — `available()` zwraca `[]`;
-  - `mock` — wartości ze słownika (w testach) lub z pliku JSON:
-    `falasz run --sensors-mock sensors.json prog.falasz`, gdzie plik to
-    `{"temperature": 21.5, "door_open": false}`. Wartość może być też listą —
-    kolejne `read` zwracają kolejne elementy, a po wyczerpaniu → `SensorError`.
-- Brak obsługi rzeczywistych czujników w v0.1.
+Eksportuje: `available`, `read`. Pełny opis API i formatu danych: `docs/sensors.md`.
+- `sensors.available()` → nowa LIST STRING z nazwami czujników, posortowana według
+  punktów kodowych. Nie zużywa odczytów.
+- `sensors.read(name)` → INTEGER, FLOAT (skończony), BOOLEAN lub STRING.
+  - `name` musi być STRING → inaczej `TypeError`; nazwy porównywane dokładnie (wielkość liter, spacje).
+  - nieznana nazwa → `SensorError` (komunikat wymienia do 10 dostępnych nazw);
+  - błąd dostawcy (np. sprzętu) → `SensorError`, nigdy surowy wyjątek;
+  - wartość spoza dozwolonych typów zwrócona przez dostawcę → `SensorError`.
+- Dostawca (provider) jest wstrzykiwany do interpretera; interpreter nigdy nie
+  komunikuje się ze sprzętem bezpośrednio:
+  - domyślnie `null` — `available()` zwraca `[]`, każdy `read` → `SensorError`;
+  - `mock` — wartości ze słownika (API Pythona) lub z pliku JSON
+    (`falasz run --sensors-mock sensors.json prog.falasz`, CLI w Etapie 7), np.
+    `{"temperature": 21.5, "door_open": false, "steps": [1, 2, 3]}`.
+- Dane `mock`:
+  - nazwa czujnika: 1–64 znaków ASCII `A-Z a-z 0-9 _ . -`;
+  - wartość stała: liczba całkowita, skończona liczba zmiennoprzecinkowa, `true`/`false`
+    lub tekst — każdy `read` zwraca ją ponownie. JSON `21` → INTEGER, `21.0` → FLOAT;
+  - sekwencja: niepusta tablica takich wartości (najwyżej 100 000) — kolejne `read`
+    zwracają kolejne elementy, a po wyczerpaniu → `SensorError`; czujnik nadal jest
+    wymieniany przez `available()`; sekwencje różnych czujników są niezależne;
+  - niedozwolone: `null`, zagnieżdżone tablice i obiekty, pusta tablica, `NaN`,
+    `Infinity`, liczby poza zakresem FLOAT, powtórzone nazwy, plik większy niż 1 MiB,
+    niepoprawne UTF-8 (BOM jest dozwolony);
+  - niepoprawne dane są wykrywane **przed** uruchomieniem programu (błąd konfiguracji,
+    w CLI kod wyjścia 2), z nazwą pliku i — dla błędów składni JSON — linią i kolumną.
+- Dostawca ma stan (pozycje sekwencji); każde uruchomienie programu powinno dostać
+  nowego dostawcę, aby wyniki były powtarzalne.
+- Brak obsługi rzeczywistych czujników w v0.1; adaptery sprzętowe implementują ten sam
+  interfejs dostawcy w przyszłych wersjach.
 
 ## 10. Limity zasobów *[zamrożone: nazwy i domyślne wartości]*
 
@@ -560,6 +579,15 @@ dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
 | E16 | Odczyt pliku | BOM nie jest usuwany (zostaje znak U+FEFF); czytane jest najwyżej 16 MiB + 1 bajt, więc urządzenia bez końca (`/dev/zero`) nie zawieszają programu |
 | E17 | Komunikaty `FileError` | zawierają ścieżkę w postaci podanej przez program (nie rozwiniętą) i przyczynę |
 | E18 | `IMPORT sensors` | rozwiązywany i sprawdzany statycznie już teraz; wywołania dają tymczasowy `NotImplementedError` do Etapu 6 |
+
+### 12.6 Ustalone w Etapie 6 — zatwierdzone 2026-10-22
+
+| # | Temat | Propozycja |
+|---|---|---|
+| E19 | Nazwy czujników | 1–64 znaków ASCII `A-Z a-z 0-9 _ . -`, porównywane dokładnie |
+| E20 | Wyczerpana sekwencja | każdy kolejny `read` → `SensorError`; czujnik nadal widoczny w `available()` |
+| E21 | Dane mock | sekwencje mogą mieszać typy; `null`, zagnieżdżenia, pusta tablica, NaN/Infinity, duplikaty → błąd konfiguracji przed startem |
+| E22 | Błędy dostawcy | wyjątek lub niepoprawna wartość od dostawcy → `SensorError` z nazwą czujnika |
 
 ## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
 

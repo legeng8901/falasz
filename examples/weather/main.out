@@ -1,0 +1,4 @@
+sensors: ["station_id", "temp_c", "wind_kmh"]
+temperature: [12.5, 13.0, 14.25, 13.75] avg 13.375
+wind: [18, 25, 31, 22] avg 24.0
+warning: strong wind

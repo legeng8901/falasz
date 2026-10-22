@@ -1,0 +1,2 @@
+IMPORT sensors
+SAY sensors.read(5)

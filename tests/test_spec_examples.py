@@ -1,7 +1,7 @@
 """Consistency checks for the spec example corpus (tests/spec_examples).
 
 Layout (docs/spec.md, section 13):
-  valid/X.falasz + X.out [+ X.in]       single-file program
+  valid/X.falasz + X.out [+ X.in] [+ X.sensors.json]   single-file program
   valid/X/main.falasz + main.out         multi-file program
   invalid/X.falasz + X.err               single-file program
   invalid/X/main.falasz + main.err       multi-file program
@@ -124,6 +124,7 @@ import contextlib  # noqa: E402
 import io  # noqa: E402
 
 from falasz.runtime import StaticErrors, run_source  # noqa: E402
+from falasz.sensors import MockSensorProvider  # noqa: E402
 
 CURRENT_STAGE = 5
 # Examples needing features of a later stage; everything else must pass now.
@@ -144,8 +145,10 @@ def _run(src):
     out = io.StringIO()
     stdin = src.with_suffix(".in")
     inp = io.BytesIO(stdin.read_bytes()) if stdin.exists() else None
+    mock = src.with_suffix(".sensors.json")
+    sensors = MockSensorProvider.from_json_file(str(mock)) if mock.exists() else None
     with contextlib.chdir(src.parent):
-        run_source(None, src.name, out=out, inp=inp)
+        run_source(None, src.name, out=out, inp=inp, sensors=sensors)
     return out.getvalue()
 
 

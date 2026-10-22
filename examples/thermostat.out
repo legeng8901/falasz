@@ -1,0 +1,7 @@
+room: living room, target 21.0
+0: 19.8 heating ON
+1: 20.4 heating ON
+2: 21.2 heating ON
+3: 21.7 heating OFF
+4: 21.3 window open -> heating OFF
+5: 20.2 heating ON

@@ -1,5 +1,8 @@
 """Standard library modules `files` and `sensors` (docs/spec.md, sections 9.3-9.4).
 
+`sensors` delegates to the interpreter's sensor provider (falasz.sensors) and
+validates whatever the provider returns.
+
 `files` is deliberately *not* a sandbox: it has the permissions of the process.
 What it guarantees is deterministic path resolution (relative paths always use
 the main script's directory, never the current working directory), UTF-8 without
@@ -12,7 +15,8 @@ import os
 import os.path
 from typing import Any
 
-from .errors import FalaszFileError, FalaszNotImplementedError, FalaszTypeError
+from .errors import FalaszError, FalaszFileError, FalaszSensorError, FalaszTypeError
+from .sensors import is_reading
 from .values import Builtin, quote, type_name
 
 MAX_READ_BYTES = 16 * 1024 * 1024
@@ -91,8 +95,29 @@ def _write_text(interp, args: list[Any]) -> None:
     return None
 
 
-def _sensors_not_implemented(interp, args: list[Any]) -> Any:
-    raise FalaszNotImplementedError("the sensors module is not implemented yet (stage 6)")
+def _sensors_available(interp, args: list[Any]) -> list[str]:
+    try:
+        names = interp.sensors.available()
+    except FalaszError:
+        raise
+    except Exception as exc:  # a provider talks to the outside world; never crash
+        raise FalaszSensorError(f"sensor provider failed to list sensors: {exc}") from None
+    if type(names) is not list or not all(type(name) is str for name in names):
+        raise FalaszSensorError("sensor provider returned an invalid list of sensor names")
+    return sorted(names)
+
+
+def _sensors_read(interp, args: list[Any]) -> Any:
+    name = _string_arg("sensors.read", "name", args[0])
+    try:
+        value = interp.sensors.read(name)
+    except FalaszError:
+        raise
+    except Exception as exc:  # see _sensors_available
+        raise FalaszSensorError(f"sensor {quote(name)} failed: {exc}") from None
+    if not is_reading(value):
+        raise FalaszSensorError(f"sensor {quote(name)} returned an invalid value ({type(value).__name__})")
+    return value
 
 
 STDLIB: dict[str, dict[str, Builtin]] = {
@@ -101,8 +126,8 @@ STDLIB: dict[str, dict[str, Builtin]] = {
         "write_text": Builtin("files.write_text", 2, 2, _write_text),
     },
     "sensors": {
-        "available": Builtin("sensors.available", 0, 0, _sensors_not_implemented),
-        "read": Builtin("sensors.read", 1, 1, _sensors_not_implemented),
+        "available": Builtin("sensors.available", 0, 0, _sensors_available),
+        "read": Builtin("sensors.read", 1, 1, _sensors_read),
     },
 }
 

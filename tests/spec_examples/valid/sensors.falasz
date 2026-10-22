@@ -1,0 +1,6 @@
+IMPORT sensors
+SAY sensors.available()
+SAY sensors.read("level") * 2
+SAY sensors.read("seq")
+SAY sensors.read("seq")
+SAY sensors.read("level") == 21

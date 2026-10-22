@@ -7,6 +7,7 @@ import pytest
 
 from falasz.errors import FalaszError
 from falasz.runtime import StaticErrors, run_source
+from falasz.sensors import MockSensorProvider
 
 FRAGMENTS = [
     "LET", "SAY", "IF", "ELSE", "WHILE", "FOR", "IN", "FUNC", "RETURN", "END", "BREAK",
@@ -44,7 +45,8 @@ def test_random_programs_fail_cleanly(seed):
 
 ATOMS = ["0", "1", "-3", "2.5", "0.0", '"a"', '""', "TRUE", "FALSE", "NULL", "[]", '[1, "a"]',
          '{"k": 1}', "{}", "x", "y", "LEN", 'RANGE(0, 3)', 'INT("5")', "INPUT()", "9" * 25,
-         "h", "h(x)", "r(3)", "r(y)", "make()", "make()(1)"]
+         "h", "h(x)", "r(3)", "r(y)", "make()", "make()(1)",
+         'sensors.read("s")', 'sensors.read("c")', "sensors.available()", 'sensors.read("x")']
 BINARY_OPS = ["+", "-", "*", "/", "%", "==", "!=", "<", ">=", "AND", "OR"]
 
 
@@ -80,7 +82,8 @@ def random_statement(rng):
     ])()
 
 
-FUNCTIONS = """FUNC h(p)
+FUNCTIONS = """IMPORT sensors
+FUNC h(p)
     RETURN p
 END
 FUNC r(n)
@@ -106,7 +109,9 @@ def test_random_well_formed_programs_fail_cleanly(seed):
         body = "\n".join(random_statement(rng) for _ in range(rng.randint(1, 6)))
         src = 'LET x = [1, 2]\nLET y = {"k": [0]}\n' + FUNCTIONS + body + "\n"
         try:
-            run_source(src, "fuzz.falasz", out=io.StringIO(), inp=io.BytesIO(b"7\n"), max_steps=5000)
+            sensors = MockSensorProvider({"s": [1, "a", 2.5, True, 0], "c": -3})
+            run_source(src, "fuzz.falasz", out=io.StringIO(), inp=io.BytesIO(b"7\n"), max_steps=5000,
+                       sensors=sensors)
         except (FalaszError, StaticErrors) as err:
             errors = err.errors if isinstance(err, StaticErrors) else [err]
             for e in errors:

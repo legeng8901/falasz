@@ -1,0 +1,12 @@
+# Multi-file example: a module that uses the sensors API.
+IMPORT sensors
+IMPORT LOCAL station
+
+SAY "sensors: " + STR(sensors.available())
+LET temps = station.collect("temp_c", 4)
+LET winds = station.collect("wind_kmh", 4)
+SAY station.describe("temperature", temps)
+SAY station.describe("wind", winds)
+IF station.average(winds) > 20
+    SAY "warning: strong wind"
+END

@@ -1,0 +1,6 @@
+{
+  "location": "living room",
+  "samples": 6,
+  "temperature": [19.8, 20.4, 21.2, 21.7, 21.3, 20.2],
+  "window_open": [false, false, false, false, true, false]
+}

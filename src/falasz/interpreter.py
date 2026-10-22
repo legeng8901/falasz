@@ -27,13 +27,13 @@ from .errors import (
     FalaszKeyError,
     FalaszLimitError,
     FalaszNameError,
-    FalaszNotImplementedError,
     FalaszRecursionLimitError,
     FalaszTypeError,
     FalaszValueError,
     Pos,
     TraceEntry,
 )
+from .sensors import NullSensorProvider, SensorProvider
 from .stdlib import STDLIB
 
 MAX_CALL_DEPTH = 500
@@ -81,6 +81,7 @@ class Interpreter:
         max_depth: int = MAX_CALL_DEPTH,
         modules: dict[str, tuple[n.Program, str]] | None = None,
         base_dir: str | None = None,
+        sensors: SensorProvider | None = None,
     ):
         self.path = path
         # Validated programs of local modules by canonical path (from ModuleLoader).
@@ -88,6 +89,7 @@ class Interpreter:
         self.module_cache: dict[str, v.Module] = {}
         # Directory that relative `files` paths are resolved against (spec 9.3).
         self.base_dir = base_dir if base_dir is not None else os.path.dirname(os.path.realpath(path))
+        self.sensors = sensors if sensors is not None else NullSensorProvider()
         self.out = out if out is not None else sys.stdout
         self.inp = inp
         self.max_steps = max_steps
@@ -220,9 +222,7 @@ class Interpreter:
             return cached
         if target.startswith("std:"):
             name = target[4:]
-            members = STDLIB.get(name)
-            if members is None:
-                raise self.error(FalaszNotImplementedError, f"standard module '{name}' is not available", stmt.pos)
+            members = STDLIB[name]  # the loader only resolves names that exist
             module = v.Module(name, "<stdlib>", Scope(None), frozenset(members))
             module.scope.vars.update(members)
         else:

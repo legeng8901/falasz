@@ -1,0 +1,23 @@
+# Reusable helpers for reading series of measurements.
+EXPORT collect, average, describe
+IMPORT sensors
+
+FUNC collect(name, count)
+    LET values = []
+    FOR i IN RANGE(0, count)
+        values = values + [sensors.read(name)]
+    END
+    RETURN values
+END
+
+FUNC average(values)
+    LET total = 0
+    FOR v IN values
+        total = total + v
+    END
+    RETURN total / LEN(values)
+END
+
+FUNC describe(name, values)
+    RETURN name + ": " + STR(values) + " avg " + STR(average(values))
+END

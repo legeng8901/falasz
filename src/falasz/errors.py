@@ -88,5 +88,3 @@ FalaszFileError = _category("FileError")
 FalaszSensorError = _category("SensorError")
 FalaszRecursionLimitError = _category("RecursionLimitError")
 FalaszLimitError = _category("LimitError")
-# Temporary category for language features of later implementation stages.
-FalaszNotImplementedError = _category("NotImplementedError")
