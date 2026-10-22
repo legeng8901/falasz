@@ -8,6 +8,9 @@ been walked completely, so they see later declarations of enclosing scopes (P7).
 
 Every `Name` node is annotated with `hops`: the number of function scopes to go
 up at run time, or `nodes.BUILTIN`. Errors are collected, not raised.
+
+`imports` maps each IMPORT binding of the file to the export names of the
+imported module (None if unknown), so `module.member` is checked statically.
 """
 
 from __future__ import annotations
@@ -34,8 +37,9 @@ class _Scope:
 
 
 class Validator:
-    def __init__(self, path: str):
+    def __init__(self, path: str, imports: dict[str, frozenset[str] | None] | None = None):
         self.path = path
+        self.imports = imports or {}
         self.errors: list[FalaszError] = []
 
     def error(self, message: str, pos: Pos) -> None:
@@ -155,7 +159,8 @@ class Validator:
 
     # --------------------------------------------------------- expressions
 
-    def name(self, node: n.Name, scope: _Scope, assigning: bool = False) -> None:
+    def name(self, node: n.Name, scope: _Scope, assigning: bool = False) -> _Decl | None:
+        """Resolve a name; returns its declaration (None for builtins/unknown names)."""
         hops = 0
         s: _Scope | None = scope
         while s is not None:
@@ -164,15 +169,16 @@ class Validator:
                 if node.name not in s.declared:
                     self.error(f"'{node.name}' is used before its declaration "
                                f"(line {s.decls[node.name].pos.line})", node.pos)
-                return
+                return s.decls[node.name]
             s = s.parent
             hops += 1
         if node.name in BUILTINS:
             node.hops = n.BUILTIN
             if assigning:
                 self.error(f"cannot assign to builtin '{node.name}'", node.pos)
-            return
+            return None
         self.error(f"'{node.name}' is not declared", node.pos)
+        return None
 
     def expr(self, node: n.Expr, scope: _Scope) -> None:
         match node:
@@ -190,6 +196,13 @@ class Validator:
             case n.Index(target=target, index=index):
                 self.expr(target, scope)
                 self.expr(index, scope)
+            case n.Member(target=n.Name() as target, name=member):
+                decl = self.name(target, scope)
+                # Only a module-level IMPORT binding is statically known to be a module.
+                if decl is not None and decl.kind == "import":
+                    exports = self.imports.get(target.name)
+                    if exports is not None and member not in exports:
+                        self.error(f"module '{target.name}' does not export '{member}'", node.pos)
             case n.Member(target=target):
                 self.expr(target, scope)
             case n.ListLit(items=items):
@@ -205,5 +218,5 @@ class Validator:
                 raise AssertionError(f"unknown expression {node!r}")
 
 
-def validate(program: n.Program) -> list[FalaszError]:
-    return Validator(program.path).validate(program)
+def validate(program: n.Program, imports: dict[str, frozenset[str] | None] | None = None) -> list[FalaszError]:
+    return Validator(program.path, imports).validate(program)

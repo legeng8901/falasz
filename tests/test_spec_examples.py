@@ -120,11 +120,12 @@ def test_other_examples_parse(src):
 
 # ------------------------------------------- stage 3+: executing the corpus
 
+import contextlib  # noqa: E402
 import io  # noqa: E402
 
 from falasz.runtime import StaticErrors, run_source  # noqa: E402
 
-CURRENT_STAGE = 4
+CURRENT_STAGE = 5
 # Examples needing features of a later stage; everything else must pass now.
 REQUIRES_STAGE = {
     "hello": 4, "scopes": 4, "arity": 4, "no_leak_to_outer": 4,
@@ -139,10 +140,12 @@ def _skip_if_later_stage(src):
 
 
 def _run(src):
+    """Run like `falasz run <name>` from the example's directory."""
     out = io.StringIO()
     stdin = src.with_suffix(".in")
     inp = io.BytesIO(stdin.read_bytes()) if stdin.exists() else None
-    run_source(src.read_text(encoding="utf-8"), src.name, out=out, inp=inp)
+    with contextlib.chdir(src.parent):
+        run_source(None, src.name, out=out, inp=inp)
     return out.getvalue()
 
 

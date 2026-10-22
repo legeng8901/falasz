@@ -1,0 +1,27 @@
+# Small text helpers (v0.1 has no string functions yet).
+EXPORT split_lines, join_lines
+
+FUNC split_lines(text)
+    LET lines = []
+    LET current = ""
+    FOR ch IN text
+        IF ch == "\n"
+            lines = lines + [current]
+            current = ""
+        ELSE
+            current = current + ch
+        END
+    END
+    IF current != ""
+        lines = lines + [current]
+    END
+    RETURN lines
+END
+
+FUNC join_lines(items)
+    LET text = ""
+    FOR item IN items
+        text = text + item + "\n"
+    END
+    RETURN text
+END

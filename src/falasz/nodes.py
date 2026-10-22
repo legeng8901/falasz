@@ -138,6 +138,8 @@ class Import(Stmt):
     alias: str | None
     pos: Pos  # IMPORT keyword: resolution errors (missing file, cycle)
     binding_pos: Pos  # alias if present, else module name: declaration errors
+    # Set by the module loader: "std:<name>" or the canonical path of the file.
+    resolved: str | None = None
 
     @property
     def binding(self) -> str:
@@ -260,7 +262,7 @@ def dump(node: object) -> str:
         case Node():
             parts = [type(node).__name__]
             for f in fields(node):  # type: ignore[arg-type]
-                if f.name in ("pos", "name_pos", "var_pos", "binding_pos", "path"):
+                if f.name in ("pos", "name_pos", "var_pos", "binding_pos", "path", "resolved"):
                     continue
                 value = getattr(node, f.name)
                 parts.append(dump(value) if not isinstance(value, (str, bool)) and value is not None

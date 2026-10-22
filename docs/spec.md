@@ -549,12 +549,28 @@ dopiero w chwili wykonania `LET`, niewykonana deklaracja = zmienna nie istnieje.
 | E10 | Kolejność przy wywołaniu | najpierw funkcja, potem argumenty od lewej do prawej, dopiero potem sprawdzenie, czy wartość jest funkcją, i liczby argumentów (`f(INPUT())` przy złej liczbie argumentów i tak czyta wejście) |
 | E11 | Limit głębokości | 500 jednocześnie aktywnych wywołań funkcji użytkownika (funkcje wbudowane się nie liczą); błąd wskazuje `(` wywołania, które przekroczyło limit |
 
+### 12.5 Ustalone w Etapie 5 — zatwierdzone 2026-10-22
+
+| # | Temat | Propozycja |
+|---|---|---|
+| E12 | Ścieżka kanoniczna modułu | po rozwinięciu dowiązań symbolicznych; importy modułu (i skryptu głównego) liczone od katalogu **rzeczywistego** pliku |
+| E13 | Przenośność nazw modułów | wielkość liter nazwy pliku musi się zgadzać także na Windows/macOS; nazwy urządzeń Windows (`CON`, `NUL`, `COM1`…) odrzucane na każdej platformie → `ImportError` |
+| E14 | Moment wykonania modułu | przy pierwszym wykonanym `IMPORT` (nie przed startem programu); błąd w kodzie najwyższego poziomu modułu ma w śladzie ramkę `<module nazwa>` |
+| E15 | Ścieżki w `files` | pusta ścieżka lub znak NUL → `FileError`; na Windows ścieżka względna dysku (`C:plik`) → `FileError`, a `\plik` oznacza korzeń dysku **skryptu**; `..` i ścieżki bezwzględne dozwolone (to nie piaskownica) |
+| E16 | Odczyt pliku | BOM nie jest usuwany (zostaje znak U+FEFF); czytane jest najwyżej 16 MiB + 1 bajt, więc urządzenia bez końca (`/dev/zero`) nie zawieszają programu |
+| E17 | Komunikaty `FileError` | zawierają ścieżkę w postaci podanej przez program (nie rozwiniętą) i przyczynę |
+| E18 | `IMPORT sensors` | rozwiązywany i sprawdzany statycznie już teraz; wywołania dają tymczasowy `NotImplementedError` do Etapu 6 |
+
 ## 13. Plan rozwoju po v0.1 (poza zakresem v0.1)
 
 Zgłoszone przez właściciela do realizacji **po** ukończeniu v0.1 — nie implementować wcześniej:
 - `HAS(map, key)` → BOOLEAN — sprawdzenie obecności klucza w MAP;
 - `APPEND(list, value)` — dopisanie elementu do LIST w miejscu;
-- `TYPE(value)` → STRING — nazwa typu wartości (`"INTEGER"`, `"LIST"`, …).
+- `TYPE(value)` → STRING — nazwa typu wartości (`"INTEGER"`, `"LIST"`, …);
+- opcjonalny mechanizm ograniczania dostępu do plików (np. `--files-root DIR`): `files`
+  odrzucałby ścieżki wychodzące poza wskazany katalog. To ograniczenie dostępu dla
+  wygody i ochrony przed pomyłkami, **nie** pełna piaskownica — nie zastępuje izolacji
+  systemu operacyjnego (dowiązania symboliczne, uprawnienia procesu, inne kanały).
 
 Kandydaci (bez decyzji): funkcje tekstowe (podział, wielkość liter, wycinki),
 `TRY/CATCH`, lambdy, interpolacja tekstu, notacja wykładnicza, kompilator.

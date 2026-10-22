@@ -1,0 +1,14 @@
+# Multi-file example: main -> storage -> (files, textutil).
+IMPORT LOCAL storage
+
+LET notes = ["buy milk", "call mum", "finish Falasz stage 5"]
+storage.save(notes)
+SAY "saved " + STR(LEN(notes)) + " notes to " + storage.FILE_NAME
+
+LET loaded = storage.load()
+LET i = 1
+FOR note IN loaded
+    SAY STR(i) + ". " + note
+    i = i + 1
+END
+SAY "round trip intact: " + STR(loaded == notes)

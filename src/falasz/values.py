@@ -4,6 +4,7 @@ Falasz values map onto Python objects:
     INTEGER -> int      FLOAT -> float     STRING -> str     BOOLEAN -> bool
     NULL -> None        LIST -> list       MAP -> FMap
     FUNCTION -> Builtin (implemented in Python) or Function (FUNC in Falasz)
+    MODULE -> Module
 Python's bool is a subclass of int, so type checks always use `type(v) is ...`.
 
 Operations raise Falasz errors without a location; the interpreter attaches the
@@ -86,6 +87,18 @@ class Function:
         self.path = path
 
 
+class Module:
+    """An imported module: its top-level scope and the names it exports."""
+
+    __slots__ = ("name", "path", "scope", "exports")
+
+    def __init__(self, name: str, path: str, scope: Any, exports: frozenset[str]):
+        self.name = name
+        self.path = path
+        self.scope = scope
+        self.exports = exports
+
+
 # --------------------------------------------------------------------- types
 
 
@@ -107,6 +120,8 @@ def type_name(v: Any) -> str:
         return "MAP"
     if t is Builtin or t is Function:
         return "FUNCTION"
+    if t is Module:
+        return "MODULE"
     raise AssertionError(f"not a Falasz value: {v!r}")
 
 
@@ -165,6 +180,8 @@ def _repr(v: Any, out: list[str], active: set[int], depth: int) -> None:
         out.append(f"<builtin {v.name}>")
     elif t is Function:
         out.append(f"<func {v.name}>")
+    elif t is Module:
+        out.append(f"<module {v.name}>")
     elif t is list or t is FMap:
         if id(v) in active:
             out.append("[...]" if t is list else "{...}")
@@ -229,7 +246,7 @@ def _equals(a: Any, b: Any, assumed: set[tuple[int, int]], depth: int) -> bool:
         if a.data.keys() != b.data.keys():
             return False
         return all(_equals(a.data[k], b.data[k], assumed, depth + 1) for k in a.data)
-    if ta is Builtin or ta is Function:
+    if ta is Builtin or ta is Function or ta is Module:
         return a is b
     return a == b
 

@@ -1,0 +1,14 @@
+# Saves and loads a list of notes, one per line, next to the main script.
+EXPORT load, save, FILE_NAME
+IMPORT files
+IMPORT LOCAL textutil
+
+LET FILE_NAME = "notes.txt"
+
+FUNC save(notes)
+    files.write_text(FILE_NAME, textutil.join_lines(notes))
+END
+
+FUNC load()
+    RETURN textutil.split_lines(files.read_text(FILE_NAME))
+END

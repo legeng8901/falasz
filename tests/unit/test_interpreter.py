@@ -269,10 +269,6 @@ def test_static_errors_prevent_execution():
     assert exc.value.errors[0].format() == "t.falasz:2:5: NameError: 'missing' is not declared"
 
 
-def test_not_yet_implemented_features_are_reported():
-    assert error("IMPORT files\n")[0] == "NotImplementedError"
-
-
 # ----------------------------------------------------- lists, maps, indexing
 
 

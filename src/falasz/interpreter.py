@@ -2,7 +2,9 @@
 
 Implemented: literals, variables, expressions, SAY, IF/WHILE/FOR, BREAK/CONTINUE,
 builtin and user functions (closures, recursion with a depth limit, call-stack
-traces). Modules (stage 5) are reported as FalaszNotImplementedError.
+traces), modules (IMPORT/EXPORT, executed once on first import) and `files`.
+
+Errors are reported in the file whose code is running: the current frame's path.
 
 The program must have been validated first: `Name.hops` tells which scope a
 name lives in, so a variable whose declaration was not executed is reported as
@@ -11,6 +13,7 @@ missing instead of resolving to an outer variable of the same name (N2).
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Any, BinaryIO, TextIO
 
@@ -24,19 +27,16 @@ from .errors import (
     FalaszKeyError,
     FalaszLimitError,
     FalaszNameError,
+    FalaszNotImplementedError,
     FalaszRecursionLimitError,
     FalaszTypeError,
     FalaszValueError,
     Pos,
     TraceEntry,
 )
+from .stdlib import STDLIB
 
 MAX_CALL_DEPTH = 500
-
-FalaszNotImplementedError = type(
-    "FalaszNotImplementedError", (FalaszError,), {"category": "NotImplementedError"}
-)
-
 
 class Scope:
     __slots__ = ("vars", "parent")
@@ -62,7 +62,7 @@ class _Return(Exception):
 
 
 class Frame:
-    """One active call: frame name ("<main>" or the function name) and its file."""
+    """One active frame: "<main>", "<module name>" or a function name, and its file."""
 
     __slots__ = ("name", "path")
 
@@ -79,8 +79,15 @@ class Interpreter:
         inp: BinaryIO | None = None,
         max_steps: int | None = None,
         max_depth: int = MAX_CALL_DEPTH,
+        modules: dict[str, tuple[n.Program, str]] | None = None,
+        base_dir: str | None = None,
     ):
         self.path = path
+        # Validated programs of local modules by canonical path (from ModuleLoader).
+        self.modules = modules or {}
+        self.module_cache: dict[str, v.Module] = {}
+        # Directory that relative `files` paths are resolved against (spec 9.3).
+        self.base_dir = base_dir if base_dir is not None else os.path.dirname(os.path.realpath(path))
         self.out = out if out is not None else sys.stdout
         self.inp = inp
         self.max_steps = max_steps
@@ -90,14 +97,18 @@ class Interpreter:
 
     # ------------------------------------------------------------ helpers
 
+    @property
+    def current_path(self) -> str:
+        return self.frames[-1].path
+
     def located(self, err: FalaszError, pos: Pos) -> FalaszError:
         """Attach a location to an error raised by a value operation or builtin."""
         if err.pos is None:
-            err.path, err.pos = self.path, pos
+            err.path, err.pos = self.current_path, pos
         return err
 
     def error(self, cls: type[FalaszError], message: str, pos: Pos) -> FalaszError:
-        return cls(message, self.path, pos)
+        return cls(message, self.current_path, pos)
 
     def step(self, pos: Pos) -> None:
         self.steps += 1
@@ -191,13 +202,46 @@ class Interpreter:
             case n.Export():
                 pass  # checked statically; exports are read by importers (stage 5)
             case n.Func(name=name, params=params, body=body):
-                scope.vars[name] = v.Function(name, [p for p, _ in params], body, scope, self.path)
+                scope.vars[name] = v.Function(name, [p for p, _ in params], body, scope, self.current_path)
             case n.Return(value=value):
                 raise _Return(None if value is None else self.evaluate(value, scope))
             case n.Import():
-                raise self.error(FalaszNotImplementedError, "IMPORT is not implemented yet (stage 5)", stmt.pos)
+                scope.vars[stmt.binding] = self.import_module(stmt)
             case _:
                 raise AssertionError(f"unexpected statement {stmt!r}")
+
+    def import_module(self, stmt: n.Import) -> v.Module:
+        """The module for an executed IMPORT; a local module runs on first import."""
+        target = stmt.resolved
+        if target is None:
+            raise AssertionError(f"IMPORT {stmt.module} was not resolved by the module loader")
+        cached = self.module_cache.get(target)
+        if cached is not None:
+            return cached
+        if target.startswith("std:"):
+            name = target[4:]
+            members = STDLIB.get(name)
+            if members is None:
+                raise self.error(FalaszNotImplementedError, f"standard module '{name}' is not available", stmt.pos)
+            module = v.Module(name, "<stdlib>", Scope(None), frozenset(members))
+            module.scope.vars.update(members)
+        else:
+            program, display = self.modules[target]
+            exports = frozenset(name for s in program.body if isinstance(s, n.Export) for name, _ in s.names)
+            module = v.Module(stmt.module, display, Scope(None), exports)
+            caller = self.frames[-1]
+            self.frames.append(Frame(f"<module {stmt.module}>", display))
+            try:
+                self.block(program.body, module.scope)
+            except FalaszError as err:
+                if not err.trace:
+                    err.trace.append(TraceEntry(err.path, err.pos, self.frames[-1].name))
+                err.trace.insert(0, TraceEntry(caller.path, stmt.pos, caller.name))
+                raise
+            finally:
+                self.frames.pop()
+        self.module_cache[target] = module
+        return module
 
     def iterate(self, value: Any, pos: Pos) -> list[Any] | str:
         t = type(value)
@@ -275,9 +319,18 @@ class Interpreter:
                 fn = self.evaluate(callee, scope)
                 args = [self.evaluate(arg, scope) for arg in arg_exprs]
                 return self.call(fn, args, node.pos)
-            case n.Member():
-                target = self.evaluate(node.target, scope)
-                raise self.error(FalaszTypeError, f"{v.type_name(target)} has no members", node.pos)
+            case n.Member(target=target_expr, name=member):
+                target = self.evaluate(target_expr, scope)
+                if type(target) is not v.Module:
+                    raise self.error(FalaszTypeError, f"{v.type_name(target)} has no members", node.pos)
+                if member not in target.exports:
+                    raise self.error(FalaszNameError,
+                                     f"module '{target.name}' does not export '{member}'", node.pos)
+                if member not in target.scope.vars:
+                    raise self.error(FalaszNameError,
+                                     f"'{target.name}.{member}' does not exist: its declaration was not executed",
+                                     node.pos)
+                return target.scope.vars[member]
         raise AssertionError(f"unexpected expression {node!r}")
 
     def wrap(self, fn, pos: Pos) -> Any:
